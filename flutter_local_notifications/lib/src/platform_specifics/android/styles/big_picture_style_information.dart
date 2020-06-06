@@ -1,7 +1,7 @@
-import 'package:flutter_local_notifications/src/platform_specifics/android/bitmap.dart';
-
-import 'default_style_information.dart';
+import '../../../../flutter_local_notifications.dart';
+import '../bitmap.dart';
 import '../enums.dart';
+import 'default_style_information.dart';
 
 /// Used to pass the content for an Android notification displayed using the big picture style.
 class BigPictureStyleInformation extends DefaultStyleInformation {
@@ -56,14 +56,14 @@ class BigPictureStyleInformation extends DefaultStyleInformation {
   }
 
   Map<String, dynamic> _convertBigPictureToMap() {
-    if (bigPicture is DrawableResourceAndroidBitmap) {
+    if (bigPicture is AndroidResourceBitmap) {
       return <String, dynamic>{
-        'bigPicture': bigPicture.bitmap,
-        'bigPictureBitmapSource': AndroidBitmapSource.Drawable.index,
+        'bigPicture': bigPicture.icon,
+        'bigPictureBitmapSource': AndroidBitmapSource.DrawableBitmap.index,
       };
-    } else if (bigPicture is FilePathAndroidBitmap) {
+    } else if (bigPicture is AndroidFilePathBitmap) {
       return <String, dynamic>{
-        'bigPicture': bigPicture.bitmap,
+        'bigPicture': bigPicture.icon,
         'bigPictureBitmapSource': AndroidBitmapSource.FilePath.index,
       };
     } else {
@@ -72,14 +72,19 @@ class BigPictureStyleInformation extends DefaultStyleInformation {
   }
 
   Map<String, dynamic> _convertLargeIconToMap() {
-    if (largeIcon is DrawableResourceAndroidBitmap) {
+    if (largeIcon is AndroidDrawable) {
       return <String, dynamic>{
-        'largeIcon': largeIcon.bitmap,
+        'largeIcon': largeIcon.icon,
         'largeIconBitmapSource': AndroidBitmapSource.Drawable.index,
       };
-    } else if (largeIcon is FilePathAndroidBitmap) {
+    } else if (largeIcon is AndroidResourceBitmap) {
       return <String, dynamic>{
-        'largeIcon': largeIcon.bitmap,
+        'largeIcon': largeIcon.icon,
+        'largeIconBitmapSource': AndroidBitmapSource.DrawableBitmap.index,
+      };
+    } else if (largeIcon is AndroidFilePathBitmap) {
+      return <String, dynamic>{
+        'largeIcon': largeIcon.icon,
         'largeIconBitmapSource': AndroidBitmapSource.FilePath.index,
       };
     } else {

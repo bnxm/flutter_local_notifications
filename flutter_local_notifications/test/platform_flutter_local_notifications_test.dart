@@ -539,7 +539,7 @@ void main() {
         'channelName',
         'channelDescription',
         styleInformation: BigPictureStyleInformation(
-          DrawableResourceAndroidBitmap('bigPictureDrawable'),
+          AndroidResourceBitmap('bigPictureDrawable'),
         ),
       );
 
@@ -601,7 +601,7 @@ void main() {
                 'htmlFormatContent': false,
                 'htmlFormatTitle': false,
                 'bigPicture': 'bigPictureDrawable',
-                'bigPictureBitmapSource': AndroidBitmapSource.Drawable.index,
+                'bigPictureBitmapSource': AndroidBitmapSource.DrawableBitmap.index,
                 'contentTitle': null,
                 'summaryText': null,
                 'htmlFormatContentTitle': false,
@@ -626,12 +626,12 @@ void main() {
         'channelName',
         'channelDescription',
         styleInformation: BigPictureStyleInformation(
-          DrawableResourceAndroidBitmap('bigPictureDrawable'),
+          AndroidResourceBitmap('bigPictureDrawable'),
           contentTitle: 'contentTitle',
           summaryText: 'summaryText',
           htmlFormatContentTitle: true,
           htmlFormatSummaryText: true,
-          largeIcon: DrawableResourceAndroidBitmap('largeDrawableIcon'),
+          largeIcon: AndroidResourceBitmap('largeDrawableIcon'),
           htmlFormatContent: true,
           htmlFormatTitle: true,
           hideExpandedLargeIcon: true,
@@ -696,9 +696,9 @@ void main() {
                 'htmlFormatContent': true,
                 'htmlFormatTitle': true,
                 'bigPicture': 'bigPictureDrawable',
-                'bigPictureBitmapSource': AndroidBitmapSource.Drawable.index,
+                'bigPictureBitmapSource': AndroidBitmapSource.DrawableBitmap.index,
                 'largeIcon': 'largeDrawableIcon',
-                'largeIconBitmapSource': AndroidBitmapSource.Drawable.index,
+                'largeIconBitmapSource': AndroidBitmapSource.DrawableBitmap.index,
                 'contentTitle': 'contentTitle',
                 'summaryText': 'summaryText',
                 'htmlFormatContentTitle': true,
@@ -723,7 +723,7 @@ void main() {
         'channelName',
         'channelDescription',
         styleInformation: BigPictureStyleInformation(
-          FilePathAndroidBitmap('bigPictureFilePath'),
+          AndroidFilePathBitmap('bigPictureFilePath'),
         ),
       );
 
@@ -810,12 +810,12 @@ void main() {
         'channelName',
         'channelDescription',
         styleInformation: BigPictureStyleInformation(
-          FilePathAndroidBitmap('bigPictureFilePath'),
+          AndroidFilePathBitmap('bigPictureFilePath'),
           contentTitle: 'contentTitle',
           summaryText: 'summaryText',
           htmlFormatContentTitle: true,
           htmlFormatSummaryText: true,
-          largeIcon: FilePathAndroidBitmap('largeFilePathIcon'),
+          largeIcon: AndroidFilePathBitmap('largeFilePathIcon'),
           htmlFormatContent: true,
           htmlFormatTitle: true,
           hideExpandedLargeIcon: true,

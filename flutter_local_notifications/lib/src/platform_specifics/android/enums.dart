@@ -1,5 +1,5 @@
 /// Specifies the source for a bitmap used by Android notifications.
-enum AndroidBitmapSource { Drawable, FilePath }
+enum AndroidBitmapSource { DrawableBitmap, FilePath, Drawable }
 
 /// Specifies the source for icons.
 enum AndroidIconSource {

@@ -482,7 +482,7 @@ class _HomePageState extends State<HomePage> {
         'your other channel description',
         icon: 'secondary_icon',
         sound: RawResourceAndroidNotificationSound('slow_spring_board'),
-        largeIcon: DrawableResourceAndroidBitmap('sample_large_icon'),
+        largeIcon: AndroidResourceBitmap('sample_large_icon'),
         vibrationPattern: vibrationPattern,
         enableLights: true,
         color: const Color.fromARGB(255, 255, 0, 0),
@@ -581,8 +581,8 @@ class _HomePageState extends State<HomePage> {
     var bigPicturePath = await _downloadAndSaveFile(
         'http://via.placeholder.com/400x800', 'bigPicture');
     var bigPictureStyleInformation = BigPictureStyleInformation(
-        FilePathAndroidBitmap(bigPicturePath),
-        largeIcon: FilePathAndroidBitmap(largeIconPath),
+        AndroidFilePathBitmap(bigPicturePath),
+        largeIcon: AndroidFilePathBitmap(largeIconPath),
         contentTitle: 'overridden <b>big</b> content title',
         htmlFormatContentTitle: true,
         summaryText: 'summary <i>text</i>',
@@ -604,7 +604,7 @@ class _HomePageState extends State<HomePage> {
     var bigPicturePath = await _downloadAndSaveFile(
         'http://via.placeholder.com/400x800', 'bigPicture');
     var bigPictureStyleInformation = BigPictureStyleInformation(
-        FilePathAndroidBitmap(bigPicturePath),
+        AndroidFilePathBitmap(bigPicturePath),
         hideExpandedLargeIcon: true,
         contentTitle: 'overridden <b>big</b> content title',
         htmlFormatContentTitle: true,
@@ -614,7 +614,7 @@ class _HomePageState extends State<HomePage> {
         'big text channel id',
         'big text channel name',
         'big text channel description',
-        largeIcon: FilePathAndroidBitmap(largeIconPath),
+        largeIcon: AndroidFilePathBitmap(largeIconPath),
         styleInformation: bigPictureStyleInformation);
     var platformChannelSpecifics =
         NotificationDetails(androidPlatformChannelSpecifics, null);
@@ -629,7 +629,7 @@ class _HomePageState extends State<HomePage> {
       'media channel id',
       'media channel name',
       'media channel description',
-      largeIcon: FilePathAndroidBitmap(largeIconPath),
+      largeIcon: AndroidFilePathBitmap(largeIconPath),
       styleInformation: MediaStyleInformation(),
     );
     var platformChannelSpecifics =
@@ -1017,7 +1017,7 @@ class _HomePageState extends State<HomePage> {
     var iOSPlatformChannelSpecifics = IOSNotificationDetails(
         attachments: [IOSNotificationAttachment(bigPicturePath)]);
     var bigPictureAndroidStyle =
-        BigPictureStyleInformation(FilePathAndroidBitmap(bigPicturePath));
+        BigPictureStyleInformation(AndroidFilePathBitmap(bigPicturePath));
     var androidPlatformChannelSpecifics = AndroidNotificationDetails(
         'your channel id', 'your channel name', 'your channel description',
         importance: Importance.High,

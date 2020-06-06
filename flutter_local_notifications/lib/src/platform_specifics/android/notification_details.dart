@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'dart:ui';
 
+import '../../../flutter_local_notifications.dart';
 import 'bitmap.dart';
 import 'enums.dart';
 import 'notification_sound.dart';
@@ -300,14 +301,19 @@ class AndroidNotificationDetails {
   }
 
   Map<String, dynamic> _convertLargeIconToMap() {
-    if (largeIcon is DrawableResourceAndroidBitmap) {
+    if (largeIcon is AndroidDrawable) {
       return <String, dynamic>{
-        'largeIcon': largeIcon.bitmap,
+        'largeIcon': largeIcon.icon,
         'largeIconBitmapSource': AndroidBitmapSource.Drawable.index,
       };
-    } else if (largeIcon is FilePathAndroidBitmap) {
+    } else if (largeIcon is AndroidResourceBitmap) {
       return <String, dynamic>{
-        'largeIcon': largeIcon.bitmap,
+        'largeIcon': largeIcon.icon,
+        'largeIconBitmapSource': AndroidBitmapSource.DrawableBitmap.index,
+      };
+    } else if (largeIcon is AndroidFilePathBitmap) {
+      return <String, dynamic>{
+        'largeIcon': largeIcon.icon,
         'largeIconBitmapSource': AndroidBitmapSource.FilePath.index,
       };
     } else {
