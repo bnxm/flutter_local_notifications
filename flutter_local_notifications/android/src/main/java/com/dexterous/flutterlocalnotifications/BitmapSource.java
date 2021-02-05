@@ -1,7 +1,7 @@
 package com.dexterous.flutterlocalnotifications;
 
-public enum BitmapSource {
-    DrawableResource,
-    FilePath,
-    Drawable
+import androidx.annotation.Keep;
+
+@Keep public enum BitmapSource {
+    DrawableResource, FilePath, VectorDrawable
 }

@@ -1,30 +1,40 @@
 import 'dart:typed_data';
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_local_notifications/src/platform_specifics/android/enums.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:platform/platform.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 void main() {
+  // TODO(maikub): add tests for `periodicallyShow` after https://github.com/dart-lang/sdk/issues/28985 is resolved
   TestWidgetsFlutterBinding.ensureInitialized();
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
-  group('android', () {
+  group('Android', () {
     const MethodChannel channel =
         MethodChannel('dexterous.com/flutter/local_notifications');
-    List<MethodCall> log = <MethodCall>[];
+    final List<MethodCall> log = <MethodCall>[];
 
     setUp(() {
       flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin.private(
           FakePlatform(operatingSystem: 'android'));
-      channel.setMockMethodCallHandler((MethodCall methodCall) async {
+      // ignore: always_specify_types
+      channel.setMockMethodCallHandler((methodCall) async {
         log.add(methodCall);
         if (methodCall.method == 'pendingNotificationRequests') {
-          return Future.value(List<Map<String, Object>>());
+          return Future<List<Map<String, Object>>>.value(
+              <Map<String, Object>>[]);
         } else if (methodCall.method == 'getNotificationAppLaunchDetails') {
-          return Future.value(Map<String, Object>());
+          return Future<Map<String, Object>>.value(<String, Object>{});
+        } else if (methodCall.method == 'getActiveNotifications') {
+          return Future<List<Map<String, Object>>>.value(
+              <Map<String, Object>>[]);
         }
+        return Future<void>.value();
       });
     });
 
@@ -36,7 +46,7 @@ void main() {
       const AndroidInitializationSettings androidInitializationSettings =
           AndroidInitializationSettings('app_icon');
       const InitializationSettings initializationSettings =
-          InitializationSettings(androidInitializationSettings, null);
+          InitializationSettings(android: androidInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       expect(log, <Matcher>[
         isMethodCall('initialize', arguments: <String, Object>{
@@ -49,7 +59,7 @@ void main() {
       const AndroidInitializationSettings androidInitializationSettings =
           AndroidInitializationSettings('app_icon');
       const InitializationSettings initializationSettings =
-          InitializationSettings(androidInitializationSettings, null);
+          InitializationSettings(android: androidInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       await flutterLocalNotificationsPlugin.show(
           1, 'notification title', 'notification body', null);
@@ -68,7 +78,7 @@ void main() {
       const AndroidInitializationSettings androidInitializationSettings =
           AndroidInitializationSettings('app_icon');
       const InitializationSettings initializationSettings =
-          InitializationSettings(androidInitializationSettings, null);
+          InitializationSettings(android: androidInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       const AndroidNotificationDetails androidNotificationDetails =
           AndroidNotificationDetails(
@@ -78,7 +88,7 @@ void main() {
           1,
           'notification title',
           'notification body',
-          NotificationDetails(androidNotificationDetails, null));
+          const NotificationDetails(android: androidNotificationDetails));
       expect(
           log.last,
           isMethodCall('show', arguments: <String, Object>{
@@ -93,15 +103,15 @@ void main() {
               'channelDescription': 'channelDescription',
               'channelShowBadge': true,
               'channelAction':
-                  AndroidNotificationChannelAction.CreateIfNotExists.index,
-              'importance': Importance.Default.value,
-              'priority': Priority.Default.value,
+                  AndroidNotificationChannelAction.createIfNotExists.index,
+              'importance': Importance.defaultImportance.value,
+              'priority': Priority.defaultPriority.value,
               'playSound': true,
               'enableVibration': true,
               'vibrationPattern': null,
               'groupKey': null,
               'setAsGroupSummary': null,
-              'groupAlertBehavior': GroupAlertBehavior.All.index,
+              'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': null,
               'colorAlpha': null,
@@ -111,6 +121,7 @@ void main() {
               'onlyAlertOnce': null,
               'showWhen': true,
               'when': null,
+              'usesChronometer': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -127,11 +138,15 @@ void main() {
               'timeoutAfter': null,
               'category': null,
               'additionalFlags': null,
-              'style': AndroidNotificationStyle.Default.index,
+              'fullScreenIntent': false,
+              'shortcutId': null,
+              'subText': null,
+              'style': AndroidNotificationStyle.defaultStyle.index,
               'styleInformation': <String, Object>{
                 'htmlFormatContent': false,
                 'htmlFormatTitle': false,
               },
+              'tag': null,
             },
           }));
     });
@@ -141,18 +156,18 @@ void main() {
       const AndroidInitializationSettings androidInitializationSettings =
           AndroidInitializationSettings('app_icon');
       const InitializationSettings initializationSettings =
-          InitializationSettings(androidInitializationSettings, null);
+          InitializationSettings(android: androidInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       final AndroidNotificationDetails androidNotificationDetails =
           AndroidNotificationDetails(
               'channelId', 'channelName', 'channelDescription',
-              additionalFlags: Int32List.fromList([4, 32]));
+              additionalFlags: Int32List.fromList(<int>[4, 32]));
 
       await flutterLocalNotificationsPlugin.show(
           1,
           'notification title',
           'notification body',
-          NotificationDetails(androidNotificationDetails, null));
+          NotificationDetails(android: androidNotificationDetails));
       expect(
           log.last,
           isMethodCall('show', arguments: <String, Object>{
@@ -167,15 +182,15 @@ void main() {
               'channelDescription': 'channelDescription',
               'channelShowBadge': true,
               'channelAction':
-                  AndroidNotificationChannelAction.CreateIfNotExists.index,
-              'importance': Importance.Default.value,
-              'priority': Priority.Default.value,
+                  AndroidNotificationChannelAction.createIfNotExists.index,
+              'importance': Importance.defaultImportance.value,
+              'priority': Priority.defaultPriority.value,
               'playSound': true,
               'enableVibration': true,
               'vibrationPattern': null,
               'groupKey': null,
               'setAsGroupSummary': null,
-              'groupAlertBehavior': GroupAlertBehavior.All.index,
+              'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': null,
               'colorAlpha': null,
@@ -185,6 +200,7 @@ void main() {
               'onlyAlertOnce': null,
               'showWhen': true,
               'when': null,
+              'usesChronometer': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -200,12 +216,16 @@ void main() {
               'visibility': null,
               'timeoutAfter': null,
               'category': null,
-              'additionalFlags': [4, 32],
-              'style': AndroidNotificationStyle.Default.index,
+              'fullScreenIntent': false,
+              'shortcutId': null,
+              'subText': null,
+              'additionalFlags': <int>[4, 32],
+              'style': AndroidNotificationStyle.defaultStyle.index,
               'styleInformation': <String, Object>{
                 'htmlFormatContent': false,
                 'htmlFormatTitle': false,
               },
+              'tag': null,
             },
           }));
     });
@@ -216,7 +236,7 @@ void main() {
       const AndroidInitializationSettings androidInitializationSettings =
           AndroidInitializationSettings('app_icon');
       const InitializationSettings initializationSettings =
-          InitializationSettings(androidInitializationSettings, null);
+          InitializationSettings(android: androidInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       final int timestamp = DateTime.now().millisecondsSinceEpoch;
 
@@ -228,7 +248,7 @@ void main() {
           1,
           'notification title',
           'notification body',
-          NotificationDetails(androidNotificationDetails, null));
+          NotificationDetails(android: androidNotificationDetails));
       expect(
           log.last,
           isMethodCall('show', arguments: <String, Object>{
@@ -243,15 +263,15 @@ void main() {
               'channelDescription': 'channelDescription',
               'channelShowBadge': true,
               'channelAction':
-                  AndroidNotificationChannelAction.CreateIfNotExists.index,
-              'importance': Importance.Default.value,
-              'priority': Priority.Default.value,
+                  AndroidNotificationChannelAction.createIfNotExists.index,
+              'importance': Importance.defaultImportance.value,
+              'priority': Priority.defaultPriority.value,
               'playSound': true,
               'enableVibration': true,
               'vibrationPattern': null,
               'groupKey': null,
               'setAsGroupSummary': null,
-              'groupAlertBehavior': GroupAlertBehavior.All.index,
+              'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': null,
               'colorAlpha': null,
@@ -261,6 +281,7 @@ void main() {
               'onlyAlertOnce': null,
               'showWhen': true,
               'when': timestamp,
+              'usesChronometer': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -277,37 +298,37 @@ void main() {
               'timeoutAfter': null,
               'category': null,
               'additionalFlags': null,
-              'style': AndroidNotificationStyle.Default.index,
+              'fullScreenIntent': false,
+              'shortcutId': null,
+              'subText': null,
+              'style': AndroidNotificationStyle.defaultStyle.index,
               'styleInformation': <String, Object>{
                 'htmlFormatContent': false,
                 'htmlFormatTitle': false,
               },
+              'tag': null,
             },
           }));
     });
 
-    test(
-        'show with default Android-specific details and custom sound from raw resource',
+    test('show with default Android-specific details with a chronometer',
         () async {
       const AndroidInitializationSettings androidInitializationSettings =
           AndroidInitializationSettings('app_icon');
       const InitializationSettings initializationSettings =
-          InitializationSettings(androidInitializationSettings, null);
+          InitializationSettings(android: androidInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-      const AndroidNotificationDetails androidNotificationDetails =
-          AndroidNotificationDetails(
-        'channelId',
-        'channelName',
-        'channelDescription',
-        sound: RawResourceAndroidNotificationSound('sound.mp3'),
-        playSound: true,
-      );
+      final int timestamp = DateTime.now().millisecondsSinceEpoch;
 
+      final AndroidNotificationDetails androidNotificationDetails =
+          AndroidNotificationDetails(
+              'channelId', 'channelName', 'channelDescription',
+              when: timestamp, usesChronometer: true);
       await flutterLocalNotificationsPlugin.show(
           1,
           'notification title',
           'notification body',
-          NotificationDetails(androidNotificationDetails, null));
+          NotificationDetails(android: androidNotificationDetails));
       expect(
           log.last,
           isMethodCall('show', arguments: <String, Object>{
@@ -322,17 +343,15 @@ void main() {
               'channelDescription': 'channelDescription',
               'channelShowBadge': true,
               'channelAction':
-                  AndroidNotificationChannelAction.CreateIfNotExists.index,
-              'importance': Importance.Default.value,
-              'priority': Priority.Default.value,
+                  AndroidNotificationChannelAction.createIfNotExists.index,
+              'importance': Importance.defaultImportance.value,
+              'priority': Priority.defaultPriority.value,
               'playSound': true,
-              'sound': 'sound.mp3',
-              'soundSource': AndroidNotificationSoundSource.RawResource.index,
               'enableVibration': true,
               'vibrationPattern': null,
               'groupKey': null,
               'setAsGroupSummary': null,
-              'groupAlertBehavior': GroupAlertBehavior.All.index,
+              'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': null,
               'colorAlpha': null,
@@ -341,7 +360,8 @@ void main() {
               'colorBlue': null,
               'onlyAlertOnce': null,
               'showWhen': true,
-              'when': null,
+              'when': timestamp,
+              'usesChronometer': true,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -358,11 +378,100 @@ void main() {
               'timeoutAfter': null,
               'category': null,
               'additionalFlags': null,
-              'style': AndroidNotificationStyle.Default.index,
+              'fullScreenIntent': false,
+              'shortcutId': null,
+              'subText': null,
+              'style': AndroidNotificationStyle.defaultStyle.index,
               'styleInformation': <String, Object>{
                 'htmlFormatContent': false,
                 'htmlFormatTitle': false,
               },
+              'tag': null,
+            },
+          }));
+    });
+
+    test(
+        'show with default Android-specific details and custom sound from raw '
+        'resource', () async {
+      const AndroidInitializationSettings androidInitializationSettings =
+          AndroidInitializationSettings('app_icon');
+      const InitializationSettings initializationSettings =
+          InitializationSettings(android: androidInitializationSettings);
+      await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+      const AndroidNotificationDetails androidNotificationDetails =
+          AndroidNotificationDetails(
+        'channelId',
+        'channelName',
+        'channelDescription',
+        sound: RawResourceAndroidNotificationSound('sound.mp3'),
+      );
+
+      await flutterLocalNotificationsPlugin.show(
+          1,
+          'notification title',
+          'notification body',
+          const NotificationDetails(android: androidNotificationDetails));
+      expect(
+          log.last,
+          isMethodCall('show', arguments: <String, Object>{
+            'id': 1,
+            'title': 'notification title',
+            'body': 'notification body',
+            'payload': '',
+            'platformSpecifics': <String, Object>{
+              'icon': null,
+              'channelId': 'channelId',
+              'channelName': 'channelName',
+              'channelDescription': 'channelDescription',
+              'channelShowBadge': true,
+              'channelAction':
+                  AndroidNotificationChannelAction.createIfNotExists.index,
+              'importance': Importance.defaultImportance.value,
+              'priority': Priority.defaultPriority.value,
+              'playSound': true,
+              'sound': 'sound.mp3',
+              'soundSource': AndroidNotificationSoundSource.rawResource.index,
+              'enableVibration': true,
+              'vibrationPattern': null,
+              'groupKey': null,
+              'setAsGroupSummary': null,
+              'groupAlertBehavior': GroupAlertBehavior.all.index,
+              'autoCancel': true,
+              'ongoing': null,
+              'colorAlpha': null,
+              'colorRed': null,
+              'colorGreen': null,
+              'colorBlue': null,
+              'onlyAlertOnce': null,
+              'showWhen': true,
+              'when': null,
+              'usesChronometer': false,
+              'showProgress': false,
+              'maxProgress': 0,
+              'progress': 0,
+              'indeterminate': false,
+              'enableLights': false,
+              'ledColorAlpha': null,
+              'ledColorRed': null,
+              'ledColorGreen': null,
+              'ledColorBlue': null,
+              'ledOnMs': null,
+              'ledOffMs': null,
+              'ticker': null,
+              'visibility': null,
+              'timeoutAfter': null,
+              'category': null,
+              'additionalFlags': null,
+              'fullScreenIntent': false,
+              'shortcutId': null,
+              'subText': null,
+              'style': AndroidNotificationStyle.defaultStyle.index,
+              'styleInformation': <String, Object>{
+                'htmlFormatContent': false,
+                'htmlFormatTitle': false,
+              },
+              'tag': null,
             },
           }));
     });
@@ -372,7 +481,7 @@ void main() {
       const AndroidInitializationSettings androidInitializationSettings =
           AndroidInitializationSettings('app_icon');
       const InitializationSettings initializationSettings =
-          InitializationSettings(androidInitializationSettings, null);
+          InitializationSettings(android: androidInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       const AndroidNotificationDetails androidNotificationDetails =
           AndroidNotificationDetails(
@@ -380,14 +489,13 @@ void main() {
         'channelName',
         'channelDescription',
         sound: UriAndroidNotificationSound('uri'),
-        playSound: true,
       );
 
       await flutterLocalNotificationsPlugin.show(
           1,
           'notification title',
           'notification body',
-          NotificationDetails(androidNotificationDetails, null));
+          const NotificationDetails(android: androidNotificationDetails));
       expect(
           log.last,
           isMethodCall('show', arguments: <String, Object>{
@@ -402,17 +510,17 @@ void main() {
               'channelDescription': 'channelDescription',
               'channelShowBadge': true,
               'channelAction':
-                  AndroidNotificationChannelAction.CreateIfNotExists.index,
-              'importance': Importance.Default.value,
-              'priority': Priority.Default.value,
+                  AndroidNotificationChannelAction.createIfNotExists.index,
+              'importance': Importance.defaultImportance.value,
+              'priority': Priority.defaultPriority.value,
               'playSound': true,
               'sound': 'uri',
-              'soundSource': AndroidNotificationSoundSource.Uri.index,
+              'soundSource': AndroidNotificationSoundSource.uri.index,
               'enableVibration': true,
               'vibrationPattern': null,
               'groupKey': null,
               'setAsGroupSummary': null,
-              'groupAlertBehavior': GroupAlertBehavior.All.index,
+              'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': null,
               'colorAlpha': null,
@@ -422,6 +530,7 @@ void main() {
               'onlyAlertOnce': null,
               'showWhen': true,
               'when': null,
+              'usesChronometer': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -438,11 +547,15 @@ void main() {
               'timeoutAfter': null,
               'category': null,
               'additionalFlags': null,
-              'style': AndroidNotificationStyle.Default.index,
+              'fullScreenIntent': false,
+              'shortcutId': null,
+              'subText': null,
+              'style': AndroidNotificationStyle.defaultStyle.index,
               'styleInformation': <String, Object>{
                 'htmlFormatContent': false,
                 'htmlFormatTitle': false,
               },
+              'tag': null,
             },
           }));
     });
@@ -453,7 +566,7 @@ void main() {
       const AndroidInitializationSettings androidInitializationSettings =
           AndroidInitializationSettings('app_icon');
       const InitializationSettings initializationSettings =
-          InitializationSettings(androidInitializationSettings, null);
+          InitializationSettings(android: androidInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       const AndroidNotificationDetails androidNotificationDetails =
           AndroidNotificationDetails(
@@ -467,7 +580,7 @@ void main() {
           1,
           'notification title',
           'notification body',
-          NotificationDetails(androidNotificationDetails, null));
+          const NotificationDetails(android: androidNotificationDetails));
       expect(
           log.last,
           isMethodCall('show', arguments: <String, Object>{
@@ -482,15 +595,15 @@ void main() {
               'channelDescription': 'channelDescription',
               'channelShowBadge': true,
               'channelAction':
-                  AndroidNotificationChannelAction.CreateIfNotExists.index,
-              'importance': Importance.Default.value,
-              'priority': Priority.Default.value,
+                  AndroidNotificationChannelAction.createIfNotExists.index,
+              'importance': Importance.defaultImportance.value,
+              'priority': Priority.defaultPriority.value,
               'playSound': true,
               'enableVibration': true,
               'vibrationPattern': null,
               'groupKey': null,
               'setAsGroupSummary': null,
-              'groupAlertBehavior': GroupAlertBehavior.All.index,
+              'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': null,
               'colorAlpha': null,
@@ -500,6 +613,7 @@ void main() {
               'onlyAlertOnce': null,
               'showWhen': true,
               'when': null,
+              'usesChronometer': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -516,22 +630,26 @@ void main() {
               'timeoutAfter': null,
               'category': null,
               'additionalFlags': null,
-              'style': AndroidNotificationStyle.Default.index,
+              'fullScreenIntent': false,
+              'shortcutId': null,
+              'subText': null,
+              'style': AndroidNotificationStyle.defaultStyle.index,
               'styleInformation': <String, Object>{
                 'htmlFormatContent': true,
                 'htmlFormatTitle': true,
               },
+              'tag': null,
             },
           }));
     });
 
     test(
-        'show with default Android big picture style settings using a drawable resource',
-        () async {
+        'show with default Android big picture style settings using a drawable '
+        'resource', () async {
       const AndroidInitializationSettings androidInitializationSettings =
           AndroidInitializationSettings('app_icon');
       const InitializationSettings initializationSettings =
-          InitializationSettings(androidInitializationSettings, null);
+          InitializationSettings(android: androidInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       const AndroidNotificationDetails androidNotificationDetails =
           AndroidNotificationDetails(
@@ -547,7 +665,7 @@ void main() {
           1,
           'notification title',
           'notification body',
-          NotificationDetails(androidNotificationDetails, null));
+          const NotificationDetails(android: androidNotificationDetails));
       expect(
           log.last,
           isMethodCall('show', arguments: <String, Object>{
@@ -562,15 +680,15 @@ void main() {
               'channelDescription': 'channelDescription',
               'channelShowBadge': true,
               'channelAction':
-                  AndroidNotificationChannelAction.CreateIfNotExists.index,
-              'importance': Importance.Default.value,
-              'priority': Priority.Default.value,
+                  AndroidNotificationChannelAction.createIfNotExists.index,
+              'importance': Importance.defaultImportance.value,
+              'priority': Priority.defaultPriority.value,
               'playSound': true,
               'enableVibration': true,
               'vibrationPattern': null,
               'groupKey': null,
               'setAsGroupSummary': null,
-              'groupAlertBehavior': GroupAlertBehavior.All.index,
+              'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': null,
               'colorAlpha': null,
@@ -580,6 +698,7 @@ void main() {
               'onlyAlertOnce': null,
               'showWhen': true,
               'when': null,
+              'usesChronometer': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -596,29 +715,33 @@ void main() {
               'timeoutAfter': null,
               'category': null,
               'additionalFlags': null,
-              'style': AndroidNotificationStyle.BigPicture.index,
+              'fullScreenIntent': false,
+              'shortcutId': null,
+              'subText': null,
+              'style': AndroidNotificationStyle.bigPicture.index,
               'styleInformation': <String, Object>{
                 'htmlFormatContent': false,
                 'htmlFormatTitle': false,
                 'bigPicture': 'bigPictureDrawable',
-                'bigPictureBitmapSource': AndroidBitmapSource.DrawableBitmap.index,
+                'bigPictureBitmapSource': AndroidBitmapSource.drawable.index,
                 'contentTitle': null,
                 'summaryText': null,
                 'htmlFormatContentTitle': false,
                 'htmlFormatSummaryText': false,
                 'hideExpandedLargeIcon': false,
               },
+              'tag': null,
             },
           }));
     });
 
     test(
-        'show with non-default Android big picture style settings using a drawable resource',
-        () async {
+        'show with non-default Android big picture style settings using a '
+        'drawable resource', () async {
       const AndroidInitializationSettings androidInitializationSettings =
           AndroidInitializationSettings('app_icon');
       const InitializationSettings initializationSettings =
-          InitializationSettings(androidInitializationSettings, null);
+          InitializationSettings(android: androidInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       const AndroidNotificationDetails androidNotificationDetails =
           AndroidNotificationDetails(
@@ -642,7 +765,7 @@ void main() {
           1,
           'notification title',
           'notification body',
-          NotificationDetails(androidNotificationDetails, null));
+          const NotificationDetails(android: androidNotificationDetails));
       expect(
           log.last,
           isMethodCall('show', arguments: <String, Object>{
@@ -657,15 +780,15 @@ void main() {
               'channelDescription': 'channelDescription',
               'channelShowBadge': true,
               'channelAction':
-                  AndroidNotificationChannelAction.CreateIfNotExists.index,
-              'importance': Importance.Default.value,
-              'priority': Priority.Default.value,
+                  AndroidNotificationChannelAction.createIfNotExists.index,
+              'importance': Importance.defaultImportance.value,
+              'priority': Priority.defaultPriority.value,
               'playSound': true,
               'enableVibration': true,
               'vibrationPattern': null,
               'groupKey': null,
               'setAsGroupSummary': null,
-              'groupAlertBehavior': GroupAlertBehavior.All.index,
+              'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': null,
               'colorAlpha': null,
@@ -675,6 +798,7 @@ void main() {
               'onlyAlertOnce': null,
               'showWhen': true,
               'when': null,
+              'usesChronometer': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -691,31 +815,35 @@ void main() {
               'timeoutAfter': null,
               'category': null,
               'additionalFlags': null,
-              'style': AndroidNotificationStyle.BigPicture.index,
+              'fullScreenIntent': false,
+              'shortcutId': null,
+              'subText': null,
+              'style': AndroidNotificationStyle.bigPicture.index,
               'styleInformation': <String, Object>{
                 'htmlFormatContent': true,
                 'htmlFormatTitle': true,
                 'bigPicture': 'bigPictureDrawable',
-                'bigPictureBitmapSource': AndroidBitmapSource.DrawableBitmap.index,
+                'bigPictureBitmapSource': AndroidBitmapSource.drawable.index,
                 'largeIcon': 'largeDrawableIcon',
-                'largeIconBitmapSource': AndroidBitmapSource.DrawableBitmap.index,
+                'largeIconBitmapSource': AndroidBitmapSource.drawable.index,
                 'contentTitle': 'contentTitle',
                 'summaryText': 'summaryText',
                 'htmlFormatContentTitle': true,
                 'htmlFormatSummaryText': true,
                 'hideExpandedLargeIcon': true,
               },
+              'tag': null,
             },
           }));
     });
 
     test(
-        'show with default Android big picture style settings using a file path',
-        () async {
+        'show with default Android big picture style settings using a file '
+        'path', () async {
       const AndroidInitializationSettings androidInitializationSettings =
           AndroidInitializationSettings('app_icon');
       const InitializationSettings initializationSettings =
-          InitializationSettings(androidInitializationSettings, null);
+          InitializationSettings(android: androidInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       const AndroidNotificationDetails androidNotificationDetails =
           AndroidNotificationDetails(
@@ -731,7 +859,7 @@ void main() {
           1,
           'notification title',
           'notification body',
-          NotificationDetails(androidNotificationDetails, null));
+          const NotificationDetails(android: androidNotificationDetails));
       expect(
           log.last,
           isMethodCall('show', arguments: <String, Object>{
@@ -746,15 +874,15 @@ void main() {
               'channelDescription': 'channelDescription',
               'channelShowBadge': true,
               'channelAction':
-                  AndroidNotificationChannelAction.CreateIfNotExists.index,
-              'importance': Importance.Default.value,
-              'priority': Priority.Default.value,
+                  AndroidNotificationChannelAction.createIfNotExists.index,
+              'importance': Importance.defaultImportance.value,
+              'priority': Priority.defaultPriority.value,
               'playSound': true,
               'enableVibration': true,
               'vibrationPattern': null,
               'groupKey': null,
               'setAsGroupSummary': null,
-              'groupAlertBehavior': GroupAlertBehavior.All.index,
+              'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': null,
               'colorAlpha': null,
@@ -764,6 +892,7 @@ void main() {
               'onlyAlertOnce': null,
               'showWhen': true,
               'when': null,
+              'usesChronometer': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -780,29 +909,33 @@ void main() {
               'timeoutAfter': null,
               'category': null,
               'additionalFlags': null,
-              'style': AndroidNotificationStyle.BigPicture.index,
+              'fullScreenIntent': false,
+              'shortcutId': null,
+              'subText': null,
+              'style': AndroidNotificationStyle.bigPicture.index,
               'styleInformation': <String, Object>{
                 'htmlFormatContent': false,
                 'htmlFormatTitle': false,
                 'bigPicture': 'bigPictureFilePath',
-                'bigPictureBitmapSource': AndroidBitmapSource.FilePath.index,
+                'bigPictureBitmapSource': AndroidBitmapSource.filePath.index,
                 'contentTitle': null,
                 'summaryText': null,
                 'htmlFormatContentTitle': false,
                 'htmlFormatSummaryText': false,
                 'hideExpandedLargeIcon': false,
               },
+              'tag': null,
             },
           }));
     });
 
     test(
-        'show with non-default Android big picture style settings using a file path',
-        () async {
+        'show with non-default Android big picture style settings using a file '
+        'path', () async {
       const AndroidInitializationSettings androidInitializationSettings =
           AndroidInitializationSettings('app_icon');
       const InitializationSettings initializationSettings =
-          InitializationSettings(androidInitializationSettings, null);
+          InitializationSettings(android: androidInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       const AndroidNotificationDetails androidNotificationDetails =
           AndroidNotificationDetails(
@@ -826,7 +959,7 @@ void main() {
           1,
           'notification title',
           'notification body',
-          NotificationDetails(androidNotificationDetails, null));
+          const NotificationDetails(android: androidNotificationDetails));
       expect(
           log.last,
           isMethodCall('show', arguments: <String, Object>{
@@ -841,15 +974,15 @@ void main() {
               'channelDescription': 'channelDescription',
               'channelShowBadge': true,
               'channelAction':
-                  AndroidNotificationChannelAction.CreateIfNotExists.index,
-              'importance': Importance.Default.value,
-              'priority': Priority.Default.value,
+                  AndroidNotificationChannelAction.createIfNotExists.index,
+              'importance': Importance.defaultImportance.value,
+              'priority': Priority.defaultPriority.value,
               'playSound': true,
               'enableVibration': true,
               'vibrationPattern': null,
               'groupKey': null,
               'setAsGroupSummary': null,
-              'groupAlertBehavior': GroupAlertBehavior.All.index,
+              'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': null,
               'colorAlpha': null,
@@ -859,6 +992,7 @@ void main() {
               'onlyAlertOnce': null,
               'showWhen': true,
               'when': null,
+              'usesChronometer': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -875,20 +1009,24 @@ void main() {
               'timeoutAfter': null,
               'category': null,
               'additionalFlags': null,
-              'style': AndroidNotificationStyle.BigPicture.index,
+              'fullScreenIntent': false,
+              'shortcutId': null,
+              'subText': null,
+              'style': AndroidNotificationStyle.bigPicture.index,
               'styleInformation': <String, Object>{
                 'htmlFormatContent': true,
                 'htmlFormatTitle': true,
                 'bigPicture': 'bigPictureFilePath',
-                'bigPictureBitmapSource': AndroidBitmapSource.FilePath.index,
+                'bigPictureBitmapSource': AndroidBitmapSource.filePath.index,
                 'largeIcon': 'largeFilePathIcon',
-                'largeIconBitmapSource': AndroidBitmapSource.FilePath.index,
+                'largeIconBitmapSource': AndroidBitmapSource.filePath.index,
                 'contentTitle': 'contentTitle',
                 'summaryText': 'summaryText',
                 'htmlFormatContentTitle': true,
                 'htmlFormatSummaryText': true,
                 'hideExpandedLargeIcon': true,
               },
+              'tag': null,
             },
           }));
     });
@@ -897,7 +1035,7 @@ void main() {
       const AndroidInitializationSettings androidInitializationSettings =
           AndroidInitializationSettings('app_icon');
       const InitializationSettings initializationSettings =
-          InitializationSettings(androidInitializationSettings, null);
+          InitializationSettings(android: androidInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       const AndroidNotificationDetails androidNotificationDetails =
           AndroidNotificationDetails(
@@ -905,7 +1043,7 @@ void main() {
         'channelName',
         'channelDescription',
         styleInformation: InboxStyleInformation(
-          ['line1'],
+          <String>['line1'],
         ),
       );
 
@@ -913,7 +1051,7 @@ void main() {
           1,
           'notification title',
           'notification body',
-          NotificationDetails(androidNotificationDetails, null));
+          const NotificationDetails(android: androidNotificationDetails));
       expect(
           log.last,
           isMethodCall('show', arguments: <String, Object>{
@@ -928,15 +1066,15 @@ void main() {
               'channelDescription': 'channelDescription',
               'channelShowBadge': true,
               'channelAction':
-                  AndroidNotificationChannelAction.CreateIfNotExists.index,
-              'importance': Importance.Default.value,
-              'priority': Priority.Default.value,
+                  AndroidNotificationChannelAction.createIfNotExists.index,
+              'importance': Importance.defaultImportance.value,
+              'priority': Priority.defaultPriority.value,
               'playSound': true,
               'enableVibration': true,
               'vibrationPattern': null,
               'groupKey': null,
               'setAsGroupSummary': null,
-              'groupAlertBehavior': GroupAlertBehavior.All.index,
+              'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': null,
               'colorAlpha': null,
@@ -946,6 +1084,7 @@ void main() {
               'onlyAlertOnce': null,
               'showWhen': true,
               'when': null,
+              'usesChronometer': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -962,17 +1101,21 @@ void main() {
               'timeoutAfter': null,
               'category': null,
               'additionalFlags': null,
-              'style': AndroidNotificationStyle.Inbox.index,
+              'fullScreenIntent': false,
+              'shortcutId': null,
+              'subText': null,
+              'style': AndroidNotificationStyle.inbox.index,
               'styleInformation': <String, Object>{
                 'htmlFormatContent': false,
                 'htmlFormatTitle': false,
-                'lines': ['line1'],
+                'lines': <String>['line1'],
                 'contentTitle': null,
                 'summaryText': null,
                 'htmlFormatContentTitle': false,
                 'htmlFormatSummaryText': false,
                 'htmlFormatLines': false,
               },
+              'tag': null,
             },
           }));
     });
@@ -981,7 +1124,7 @@ void main() {
       const AndroidInitializationSettings androidInitializationSettings =
           AndroidInitializationSettings('app_icon');
       const InitializationSettings initializationSettings =
-          InitializationSettings(androidInitializationSettings, null);
+          InitializationSettings(android: androidInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       const AndroidNotificationDetails androidNotificationDetails =
           AndroidNotificationDetails(
@@ -989,7 +1132,7 @@ void main() {
         'channelName',
         'channelDescription',
         styleInformation: InboxStyleInformation(
-          ['line1'],
+          <String>['line1'],
           htmlFormatLines: true,
           htmlFormatContent: true,
           htmlFormatContentTitle: true,
@@ -1004,7 +1147,7 @@ void main() {
           1,
           'notification title',
           'notification body',
-          NotificationDetails(androidNotificationDetails, null));
+          const NotificationDetails(android: androidNotificationDetails));
       expect(
           log.last,
           isMethodCall('show', arguments: <String, Object>{
@@ -1019,15 +1162,15 @@ void main() {
               'channelDescription': 'channelDescription',
               'channelShowBadge': true,
               'channelAction':
-                  AndroidNotificationChannelAction.CreateIfNotExists.index,
-              'importance': Importance.Default.value,
-              'priority': Priority.Default.value,
+                  AndroidNotificationChannelAction.createIfNotExists.index,
+              'importance': Importance.defaultImportance.value,
+              'priority': Priority.defaultPriority.value,
               'playSound': true,
               'enableVibration': true,
               'vibrationPattern': null,
               'groupKey': null,
               'setAsGroupSummary': null,
-              'groupAlertBehavior': GroupAlertBehavior.All.index,
+              'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': null,
               'colorAlpha': null,
@@ -1037,6 +1180,7 @@ void main() {
               'onlyAlertOnce': null,
               'showWhen': true,
               'when': null,
+              'usesChronometer': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1053,17 +1197,21 @@ void main() {
               'timeoutAfter': null,
               'category': null,
               'additionalFlags': null,
-              'style': AndroidNotificationStyle.Inbox.index,
+              'fullScreenIntent': false,
+              'shortcutId': null,
+              'subText': null,
+              'style': AndroidNotificationStyle.inbox.index,
               'styleInformation': <String, Object>{
                 'htmlFormatContent': true,
                 'htmlFormatTitle': true,
-                'lines': ['line1'],
+                'lines': <String>['line1'],
                 'contentTitle': 'contentTitle',
                 'summaryText': 'summaryText',
                 'htmlFormatContentTitle': true,
                 'htmlFormatSummaryText': true,
                 'htmlFormatLines': true,
               },
+              'tag': null,
             },
           }));
     });
@@ -1072,7 +1220,7 @@ void main() {
       const AndroidInitializationSettings androidInitializationSettings =
           AndroidInitializationSettings('app_icon');
       const InitializationSettings initializationSettings =
-          InitializationSettings(androidInitializationSettings, null);
+          InitializationSettings(android: androidInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       const AndroidNotificationDetails androidNotificationDetails =
           AndroidNotificationDetails(
@@ -1086,7 +1234,7 @@ void main() {
           1,
           'notification title',
           'notification body',
-          NotificationDetails(androidNotificationDetails, null));
+          const NotificationDetails(android: androidNotificationDetails));
       expect(
           log.last,
           isMethodCall('show', arguments: <String, Object>{
@@ -1101,15 +1249,15 @@ void main() {
               'channelDescription': 'channelDescription',
               'channelShowBadge': true,
               'channelAction':
-                  AndroidNotificationChannelAction.CreateIfNotExists.index,
-              'importance': Importance.Default.value,
-              'priority': Priority.Default.value,
+                  AndroidNotificationChannelAction.createIfNotExists.index,
+              'importance': Importance.defaultImportance.value,
+              'priority': Priority.defaultPriority.value,
               'playSound': true,
               'enableVibration': true,
               'vibrationPattern': null,
               'groupKey': null,
               'setAsGroupSummary': null,
-              'groupAlertBehavior': GroupAlertBehavior.All.index,
+              'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': null,
               'colorAlpha': null,
@@ -1119,6 +1267,7 @@ void main() {
               'onlyAlertOnce': null,
               'showWhen': true,
               'when': null,
+              'usesChronometer': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1135,11 +1284,15 @@ void main() {
               'timeoutAfter': null,
               'category': null,
               'additionalFlags': null,
-              'style': AndroidNotificationStyle.Media.index,
+              'fullScreenIntent': false,
+              'shortcutId': null,
+              'subText': null,
+              'style': AndroidNotificationStyle.media.index,
               'styleInformation': <String, Object>{
                 'htmlFormatContent': false,
                 'htmlFormatTitle': false,
               },
+              'tag': null,
             },
           }));
     });
@@ -1148,7 +1301,7 @@ void main() {
       const AndroidInitializationSettings androidInitializationSettings =
           AndroidInitializationSettings('app_icon');
       const InitializationSettings initializationSettings =
-          InitializationSettings(androidInitializationSettings, null);
+          InitializationSettings(android: androidInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       const AndroidNotificationDetails androidNotificationDetails =
           AndroidNotificationDetails(
@@ -1165,7 +1318,7 @@ void main() {
           1,
           'notification title',
           'notification body',
-          NotificationDetails(androidNotificationDetails, null));
+          const NotificationDetails(android: androidNotificationDetails));
       expect(
           log.last,
           isMethodCall('show', arguments: <String, Object>{
@@ -1180,15 +1333,15 @@ void main() {
               'channelDescription': 'channelDescription',
               'channelShowBadge': true,
               'channelAction':
-                  AndroidNotificationChannelAction.CreateIfNotExists.index,
-              'importance': Importance.Default.value,
-              'priority': Priority.Default.value,
+                  AndroidNotificationChannelAction.createIfNotExists.index,
+              'importance': Importance.defaultImportance.value,
+              'priority': Priority.defaultPriority.value,
               'playSound': true,
               'enableVibration': true,
               'vibrationPattern': null,
               'groupKey': null,
               'setAsGroupSummary': null,
-              'groupAlertBehavior': GroupAlertBehavior.All.index,
+              'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': null,
               'colorAlpha': null,
@@ -1198,6 +1351,7 @@ void main() {
               'onlyAlertOnce': null,
               'showWhen': true,
               'when': null,
+              'usesChronometer': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1214,11 +1368,15 @@ void main() {
               'timeoutAfter': null,
               'category': null,
               'additionalFlags': null,
-              'style': AndroidNotificationStyle.Media.index,
+              'fullScreenIntent': false,
+              'shortcutId': null,
+              'subText': null,
+              'style': AndroidNotificationStyle.media.index,
               'styleInformation': <String, Object>{
                 'htmlFormatContent': true,
                 'htmlFormatTitle': true,
               },
+              'tag': null,
             },
           }));
     });
@@ -1228,7 +1386,7 @@ void main() {
       const AndroidInitializationSettings androidInitializationSettings =
           AndroidInitializationSettings('app_icon');
       const InitializationSettings initializationSettings =
-          InitializationSettings(androidInitializationSettings, null);
+          InitializationSettings(android: androidInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       final AndroidNotificationDetails androidNotificationDetails =
           AndroidNotificationDetails(
@@ -1236,8 +1394,8 @@ void main() {
         'channelName',
         'channelDescription',
         styleInformation: MessagingStyleInformation(
-          Person(name: 'name'),
-          messages: [
+          const Person(name: 'name'),
+          messages: <Message>[
             Message(
               'message 1',
               messageDateTime,
@@ -1251,7 +1409,7 @@ void main() {
           1,
           'notification title',
           'notification body',
-          NotificationDetails(androidNotificationDetails, null));
+          NotificationDetails(android: androidNotificationDetails));
       expect(
           log.last,
           isMethodCall('show', arguments: <String, Object>{
@@ -1266,15 +1424,15 @@ void main() {
               'channelDescription': 'channelDescription',
               'channelShowBadge': true,
               'channelAction':
-                  AndroidNotificationChannelAction.CreateIfNotExists.index,
-              'importance': Importance.Default.value,
-              'priority': Priority.Default.value,
+                  AndroidNotificationChannelAction.createIfNotExists.index,
+              'importance': Importance.defaultImportance.value,
+              'priority': Priority.defaultPriority.value,
               'playSound': true,
               'enableVibration': true,
               'vibrationPattern': null,
               'groupKey': null,
               'setAsGroupSummary': null,
-              'groupAlertBehavior': GroupAlertBehavior.All.index,
+              'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': null,
               'colorAlpha': null,
@@ -1284,6 +1442,7 @@ void main() {
               'onlyAlertOnce': null,
               'showWhen': true,
               'when': null,
+              'usesChronometer': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1300,7 +1459,10 @@ void main() {
               'timeoutAfter': null,
               'category': null,
               'additionalFlags': null,
-              'style': AndroidNotificationStyle.Messaging.index,
+              'fullScreenIntent': false,
+              'shortcutId': null,
+              'subText': null,
+              'style': AndroidNotificationStyle.messaging.index,
               'styleInformation': <String, Object>{
                 'htmlFormatContent': false,
                 'htmlFormatTitle': false,
@@ -1313,7 +1475,7 @@ void main() {
                 },
                 'conversationTitle': null,
                 'groupConversation': null,
-                'messages': [
+                'messages': <Map<String, Object>>[
                   <String, Object>{
                     'text': 'message 1',
                     'timestamp': messageDateTime.millisecondsSinceEpoch,
@@ -1323,6 +1485,7 @@ void main() {
                   }
                 ],
               },
+              'tag': null,
             },
           }));
     });
@@ -1332,7 +1495,7 @@ void main() {
       const AndroidInitializationSettings androidInitializationSettings =
           AndroidInitializationSettings('app_icon');
       const InitializationSettings initializationSettings =
-          InitializationSettings(androidInitializationSettings, null);
+          InitializationSettings(android: androidInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       final AndroidNotificationDetails androidNotificationDetails =
           AndroidNotificationDetails(
@@ -1340,7 +1503,7 @@ void main() {
         'channelName',
         'channelDescription',
         styleInformation: MessagingStyleInformation(
-          Person(
+          const Person(
             bot: true,
             icon: DrawableResourceAndroidIcon('drawablePersonIcon'),
             important: true,
@@ -1350,7 +1513,7 @@ void main() {
           ),
           conversationTitle: 'conversationTitle',
           groupConversation: true,
-          messages: [
+          messages: <Message>[
             Message(
               'message 1',
               messageDateTime,
@@ -1366,7 +1529,7 @@ void main() {
           1,
           'notification title',
           'notification body',
-          NotificationDetails(androidNotificationDetails, null));
+          NotificationDetails(android: androidNotificationDetails));
       expect(
           log.last,
           isMethodCall('show', arguments: <String, Object>{
@@ -1381,15 +1544,15 @@ void main() {
               'channelDescription': 'channelDescription',
               'channelShowBadge': true,
               'channelAction':
-                  AndroidNotificationChannelAction.CreateIfNotExists.index,
-              'importance': Importance.Default.value,
-              'priority': Priority.Default.value,
+                  AndroidNotificationChannelAction.createIfNotExists.index,
+              'importance': Importance.defaultImportance.value,
+              'priority': Priority.defaultPriority.value,
               'playSound': true,
               'enableVibration': true,
               'vibrationPattern': null,
               'groupKey': null,
               'setAsGroupSummary': null,
-              'groupAlertBehavior': GroupAlertBehavior.All.index,
+              'groupAlertBehavior': GroupAlertBehavior.all.index,
               'autoCancel': true,
               'ongoing': null,
               'colorAlpha': null,
@@ -1399,6 +1562,7 @@ void main() {
               'onlyAlertOnce': null,
               'showWhen': true,
               'when': null,
+              'usesChronometer': false,
               'showProgress': false,
               'maxProgress': 0,
               'progress': 0,
@@ -1415,7 +1579,10 @@ void main() {
               'timeoutAfter': null,
               'category': null,
               'additionalFlags': null,
-              'style': AndroidNotificationStyle.Messaging.index,
+              'fullScreenIntent': false,
+              'shortcutId': null,
+              'subText': null,
+              'style': AndroidNotificationStyle.messaging.index,
               'styleInformation': <String, Object>{
                 'htmlFormatContent': false,
                 'htmlFormatTitle': false,
@@ -1426,11 +1593,11 @@ void main() {
                   'name': 'name',
                   'uri': 'uri',
                   'icon': 'drawablePersonIcon',
-                  'iconSource': AndroidIconSource.DrawableResource.index,
+                  'iconSource': AndroidIconSource.drawableResource.index,
                 },
                 'conversationTitle': 'conversationTitle',
                 'groupConversation': true,
-                'messages': [
+                'messages': <Map<String, Object>>[
                   <String, Object>{
                     'text': 'message 1',
                     'timestamp': messageDateTime.millisecondsSinceEpoch,
@@ -1440,23 +1607,332 @@ void main() {
                   }
                 ],
               },
+              'tag': null,
             },
           }));
+    });
+
+    group('zonedSchedule', () {
+      test('no repeat frequency', () async {
+        const AndroidInitializationSettings androidInitializationSettings =
+            AndroidInitializationSettings('app_icon');
+        const InitializationSettings initializationSettings =
+            InitializationSettings(android: androidInitializationSettings);
+        await flutterLocalNotificationsPlugin
+            .initialize(initializationSettings);
+        tz.initializeTimeZones();
+        tz.setLocalLocation(tz.getLocation('Australia/Sydney'));
+        final tz.TZDateTime scheduledDate =
+            tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5));
+        const AndroidNotificationDetails androidNotificationDetails =
+            AndroidNotificationDetails(
+                'channelId', 'channelName', 'channelDescription');
+        await flutterLocalNotificationsPlugin.zonedSchedule(
+            1,
+            'notification title',
+            'notification body',
+            scheduledDate,
+            const NotificationDetails(android: androidNotificationDetails),
+            androidAllowWhileIdle: true,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime);
+        expect(
+            log.last,
+            isMethodCall('zonedSchedule', arguments: <String, Object>{
+              'id': 1,
+              'title': 'notification title',
+              'body': 'notification body',
+              'payload': '',
+              'timeZoneName': 'Australia/Sydney',
+              'scheduledDateTime': _convertDateToISO8601String(scheduledDate),
+              'platformSpecifics': <String, Object>{
+                'allowWhileIdle': true,
+                'icon': null,
+                'channelId': 'channelId',
+                'channelName': 'channelName',
+                'channelDescription': 'channelDescription',
+                'channelShowBadge': true,
+                'channelAction':
+                    AndroidNotificationChannelAction.createIfNotExists.index,
+                'importance': Importance.defaultImportance.value,
+                'priority': Priority.defaultPriority.value,
+                'playSound': true,
+                'enableVibration': true,
+                'vibrationPattern': null,
+                'groupKey': null,
+                'setAsGroupSummary': null,
+                'groupAlertBehavior': GroupAlertBehavior.all.index,
+                'autoCancel': true,
+                'ongoing': null,
+                'colorAlpha': null,
+                'colorRed': null,
+                'colorGreen': null,
+                'colorBlue': null,
+                'onlyAlertOnce': null,
+                'showWhen': true,
+                'when': null,
+                'usesChronometer': false,
+                'showProgress': false,
+                'maxProgress': 0,
+                'progress': 0,
+                'indeterminate': false,
+                'enableLights': false,
+                'ledColorAlpha': null,
+                'ledColorRed': null,
+                'ledColorGreen': null,
+                'ledColorBlue': null,
+                'ledOnMs': null,
+                'ledOffMs': null,
+                'ticker': null,
+                'visibility': null,
+                'timeoutAfter': null,
+                'category': null,
+                'additionalFlags': null,
+                'fullScreenIntent': false,
+                'shortcutId': null,
+                'subText': null,
+                'style': AndroidNotificationStyle.defaultStyle.index,
+                'styleInformation': <String, Object>{
+                  'htmlFormatContent': false,
+                  'htmlFormatTitle': false,
+                },
+                'tag': null,
+              },
+            }));
+      });
+
+      test('match time components', () async {
+        const AndroidInitializationSettings androidInitializationSettings =
+            AndroidInitializationSettings('app_icon');
+        const InitializationSettings initializationSettings =
+            InitializationSettings(android: androidInitializationSettings);
+        await flutterLocalNotificationsPlugin
+            .initialize(initializationSettings);
+
+        tz.initializeTimeZones();
+        tz.setLocalLocation(tz.getLocation('Australia/Sydney'));
+        final tz.TZDateTime scheduledDate =
+            tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5));
+        const AndroidNotificationDetails androidNotificationDetails =
+            AndroidNotificationDetails(
+                'channelId', 'channelName', 'channelDescription');
+        await flutterLocalNotificationsPlugin.zonedSchedule(
+            1,
+            'notification title',
+            'notification body',
+            scheduledDate,
+            const NotificationDetails(android: androidNotificationDetails),
+            androidAllowWhileIdle: true,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+            matchDateTimeComponents: DateTimeComponents.time);
+        expect(
+            log.last,
+            isMethodCall('zonedSchedule', arguments: <String, Object>{
+              'id': 1,
+              'title': 'notification title',
+              'body': 'notification body',
+              'payload': '',
+              'timeZoneName': 'Australia/Sydney',
+              'scheduledDateTime': _convertDateToISO8601String(scheduledDate),
+              'matchDateTimeComponents': DateTimeComponents.time.index,
+              'platformSpecifics': <String, Object>{
+                'allowWhileIdle': true,
+                'icon': null,
+                'channelId': 'channelId',
+                'channelName': 'channelName',
+                'channelDescription': 'channelDescription',
+                'channelShowBadge': true,
+                'channelAction':
+                    AndroidNotificationChannelAction.createIfNotExists.index,
+                'importance': Importance.defaultImportance.value,
+                'priority': Priority.defaultPriority.value,
+                'playSound': true,
+                'enableVibration': true,
+                'vibrationPattern': null,
+                'groupKey': null,
+                'setAsGroupSummary': null,
+                'groupAlertBehavior': GroupAlertBehavior.all.index,
+                'autoCancel': true,
+                'ongoing': null,
+                'colorAlpha': null,
+                'colorRed': null,
+                'colorGreen': null,
+                'colorBlue': null,
+                'onlyAlertOnce': null,
+                'showWhen': true,
+                'when': null,
+                'usesChronometer': false,
+                'showProgress': false,
+                'maxProgress': 0,
+                'progress': 0,
+                'indeterminate': false,
+                'enableLights': false,
+                'ledColorAlpha': null,
+                'ledColorRed': null,
+                'ledColorGreen': null,
+                'ledColorBlue': null,
+                'ledOnMs': null,
+                'ledOffMs': null,
+                'ticker': null,
+                'visibility': null,
+                'timeoutAfter': null,
+                'category': null,
+                'additionalFlags': null,
+                'fullScreenIntent': false,
+                'shortcutId': null,
+                'subText': null,
+                'style': AndroidNotificationStyle.defaultStyle.index,
+                'styleInformation': <String, Object>{
+                  'htmlFormatContent': false,
+                  'htmlFormatTitle': false,
+                },
+                'tag': null,
+              },
+            }));
+      });
+
+      test('match day of week and time components', () async {
+        const AndroidInitializationSettings androidInitializationSettings =
+            AndroidInitializationSettings('app_icon');
+        const InitializationSettings initializationSettings =
+            InitializationSettings(android: androidInitializationSettings);
+        await flutterLocalNotificationsPlugin
+            .initialize(initializationSettings);
+
+        tz.initializeTimeZones();
+        tz.setLocalLocation(tz.getLocation('Australia/Sydney'));
+        final tz.TZDateTime scheduledDate =
+            tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5));
+        const AndroidNotificationDetails androidNotificationDetails =
+            AndroidNotificationDetails(
+                'channelId', 'channelName', 'channelDescription');
+        await flutterLocalNotificationsPlugin.zonedSchedule(
+            1,
+            'notification title',
+            'notification body',
+            scheduledDate,
+            const NotificationDetails(android: androidNotificationDetails),
+            androidAllowWhileIdle: true,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+            matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime);
+        expect(
+            log.last,
+            isMethodCall('zonedSchedule', arguments: <String, Object>{
+              'id': 1,
+              'title': 'notification title',
+              'body': 'notification body',
+              'payload': '',
+              'timeZoneName': 'Australia/Sydney',
+              'scheduledDateTime': _convertDateToISO8601String(scheduledDate),
+              'matchDateTimeComponents':
+                  DateTimeComponents.dayOfWeekAndTime.index,
+              'platformSpecifics': <String, Object>{
+                'allowWhileIdle': true,
+                'icon': null,
+                'channelId': 'channelId',
+                'channelName': 'channelName',
+                'channelDescription': 'channelDescription',
+                'channelShowBadge': true,
+                'channelAction':
+                    AndroidNotificationChannelAction.createIfNotExists.index,
+                'importance': Importance.defaultImportance.value,
+                'priority': Priority.defaultPriority.value,
+                'playSound': true,
+                'enableVibration': true,
+                'vibrationPattern': null,
+                'groupKey': null,
+                'setAsGroupSummary': null,
+                'groupAlertBehavior': GroupAlertBehavior.all.index,
+                'autoCancel': true,
+                'ongoing': null,
+                'colorAlpha': null,
+                'colorRed': null,
+                'colorGreen': null,
+                'colorBlue': null,
+                'onlyAlertOnce': null,
+                'showWhen': true,
+                'when': null,
+                'usesChronometer': false,
+                'showProgress': false,
+                'maxProgress': 0,
+                'progress': 0,
+                'indeterminate': false,
+                'enableLights': false,
+                'ledColorAlpha': null,
+                'ledColorRed': null,
+                'ledColorGreen': null,
+                'ledColorBlue': null,
+                'ledOnMs': null,
+                'ledOffMs': null,
+                'ticker': null,
+                'visibility': null,
+                'timeoutAfter': null,
+                'category': null,
+                'additionalFlags': null,
+                'fullScreenIntent': false,
+                'shortcutId': null,
+                'subText': null,
+                'style': AndroidNotificationStyle.defaultStyle.index,
+                'styleInformation': <String, Object>{
+                  'htmlFormatContent': false,
+                  'htmlFormatTitle': false,
+                },
+                'tag': null,
+              },
+            }));
+      });
+    });
+
+    group('createNotificationChannelGroup', () {
+      test('without description', () async {
+        await flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>()
+            .createNotificationChannelGroup(
+                const AndroidNotificationChannelGroup('groupId', 'groupName'));
+        expect(log, <Matcher>[
+          isMethodCall('createNotificationChannelGroup',
+              arguments: <String, Object>{
+                'id': 'groupId',
+                'name': 'groupName',
+                'description': null,
+              })
+        ]);
+      });
+      test('with description', () async {
+        await flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>()
+            .createNotificationChannelGroup(
+                const AndroidNotificationChannelGroup('groupId', 'groupName',
+                    description: 'groupDescription'));
+        expect(log, <Matcher>[
+          isMethodCall('createNotificationChannelGroup',
+              arguments: <String, Object>{
+                'id': 'groupId',
+                'name': 'groupName',
+                'description': 'groupDescription',
+              })
+        ]);
+      });
     });
 
     test('createNotificationChannel with default settings', () async {
       await flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>()
-          .createNotificationChannel(AndroidNotificationChannel(
+          .createNotificationChannel(const AndroidNotificationChannel(
               'channelId', 'channelName', 'channelDescription'));
       expect(log, <Matcher>[
         isMethodCall('createNotificationChannel', arguments: <String, Object>{
           'id': 'channelId',
           'name': 'channelName',
           'description': 'channelDescription',
+          'groupId': null,
           'showBadge': true,
-          'importance': Importance.Default.value,
+          'importance': Importance.defaultImportance.value,
           'playSound': true,
           'enableVibration': true,
           'vibrationPattern': null,
@@ -1466,7 +1942,7 @@ void main() {
           'ledColorGreen': null,
           'ledColorBlue': null,
           'channelAction':
-              AndroidNotificationChannelAction.CreateIfNotExists?.index,
+              AndroidNotificationChannelAction.createIfNotExists?.index,
         })
       ]);
     });
@@ -1475,24 +1951,26 @@ void main() {
       await flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>()
-          .createNotificationChannel(AndroidNotificationChannel(
+          .createNotificationChannel(const AndroidNotificationChannel(
             'channelId',
             'channelName',
             'channelDescription',
+            groupId: 'channelGroupId',
             showBadge: false,
-            importance: Importance.Max,
+            importance: Importance.max,
             playSound: false,
             enableLights: true,
             enableVibration: false,
-            ledColor: const Color.fromARGB(255, 255, 0, 0),
+            ledColor: Color.fromARGB(255, 255, 0, 0),
           ));
       expect(log, <Matcher>[
         isMethodCall('createNotificationChannel', arguments: <String, Object>{
           'id': 'channelId',
           'name': 'channelName',
           'description': 'channelDescription',
+          'groupId': 'channelGroupId',
           'showBadge': false,
-          'importance': Importance.Max.value,
+          'importance': Importance.max.value,
           'playSound': false,
           'enableVibration': false,
           'vibrationPattern': null,
@@ -1502,7 +1980,7 @@ void main() {
           'ledColorGreen': 0,
           'ledColorBlue': 0,
           'channelAction':
-              AndroidNotificationChannelAction.CreateIfNotExists?.index,
+              AndroidNotificationChannelAction.createIfNotExists?.index,
         })
       ]);
     });
@@ -1517,9 +1995,33 @@ void main() {
       ]);
     });
 
+    test('getActiveNotifications', () async {
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          .getActiveNotifications();
+      expect(log,
+          <Matcher>[isMethodCall('getActiveNotifications', arguments: null)]);
+    });
+
     test('cancel', () async {
       await flutterLocalNotificationsPlugin.cancel(1);
-      expect(log, <Matcher>[isMethodCall('cancel', arguments: 1)]);
+      expect(log, <Matcher>[
+        isMethodCall('cancel', arguments: <String, Object>{
+          'id': 1,
+          'tag': null,
+        })
+      ]);
+    });
+
+    test('cancel with tag', () async {
+      await flutterLocalNotificationsPlugin.cancel(1, tag: 'tag');
+      expect(log, <Matcher>[
+        isMethodCall('cancel', arguments: <String, Object>{
+          'id': 1,
+          'tag': 'tag',
+        })
+      ]);
     });
 
     test('cancelAll', () async {
@@ -1534,6 +2036,16 @@ void main() {
       ]);
     });
 
+    test('getActiveNotifications', () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          .getActiveNotifications();
+      expect(log,
+          <Matcher>[isMethodCall('getActiveNotifications', arguments: null)]);
+    });
+
     test('getNotificationAppLaunchDetails', () async {
       await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
       expect(log, <Matcher>[
@@ -1542,21 +2054,24 @@ void main() {
     });
   });
 
-  group('ios', () {
+  group('iOS', () {
     const MethodChannel channel =
         MethodChannel('dexterous.com/flutter/local_notifications');
-    List<MethodCall> log = <MethodCall>[];
+    final List<MethodCall> log = <MethodCall>[];
 
     setUp(() {
       flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin.private(
           FakePlatform(operatingSystem: 'ios'));
-      channel.setMockMethodCallHandler((MethodCall methodCall) async {
+      // ignore: always_specify_types
+      channel.setMockMethodCallHandler((methodCall) {
         log.add(methodCall);
         if (methodCall.method == 'pendingNotificationRequests') {
-          return Future.value(List<Map<String, Object>>());
+          return Future<List<Map<String, Object>>>.value(
+              <Map<String, Object>>[]);
         } else if (methodCall.method == 'getNotificationAppLaunchDetails') {
-          return Future.value(Map<String, Object>());
+          return Future<Map<String, Object>>.value(<String, Object>{});
         }
+        return Future<void>.value();
       });
     });
 
@@ -1568,7 +2083,7 @@ void main() {
       const IOSInitializationSettings iosInitializationSettings =
           IOSInitializationSettings();
       const InitializationSettings initializationSettings =
-          InitializationSettings(null, iosInitializationSettings);
+          InitializationSettings(iOS: iosInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       expect(log, <Matcher>[
         isMethodCall('initialize', arguments: <String, Object>{
@@ -1592,7 +2107,7 @@ void main() {
               defaultPresentBadge: false,
               defaultPresentSound: false);
       const InitializationSettings initializationSettings =
-          InitializationSettings(null, iosInitializationSettings);
+          InitializationSettings(iOS: iosInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       expect(log, <Matcher>[
         isMethodCall('initialize', arguments: <String, Object>{
@@ -1610,7 +2125,7 @@ void main() {
       const IOSInitializationSettings iosInitializationSettings =
           IOSInitializationSettings();
       const InitializationSettings initializationSettings =
-          InitializationSettings(null, iosInitializationSettings);
+          InitializationSettings(iOS: iosInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       await flutterLocalNotificationsPlugin.show(
           1, 'notification title', 'notification body', null);
@@ -1629,22 +2144,24 @@ void main() {
       const IOSInitializationSettings iosInitializationSettings =
           IOSInitializationSettings();
       const InitializationSettings initializationSettings =
-          InitializationSettings(null, iosInitializationSettings);
+          InitializationSettings(iOS: iosInitializationSettings);
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
       const NotificationDetails notificationDetails = NotificationDetails(
-          null,
-          IOSNotificationDetails(
+          iOS: IOSNotificationDetails(
               presentAlert: true,
               presentBadge: true,
               presentSound: true,
+              subtitle: 'a subtitle',
               sound: 'sound.mp3',
               badgeNumber: 1,
-              attachments: [
-                IOSNotificationAttachment('video.mp4',
-                    identifier: '2b3f705f-a680-4c9f-8075-a46a70e28373')
-              ]));
+              attachments: <IOSNotificationAttachment>[
+            IOSNotificationAttachment('video.mp4',
+                identifier: '2b3f705f-a680-4c9f-8075-a46a70e28373'),
+          ]));
+
       await flutterLocalNotificationsPlugin.show(
           1, 'notification title', 'notification body', notificationDetails);
+
       expect(
           log.last,
           isMethodCall('show', arguments: <String, Object>{
@@ -1656,9 +2173,11 @@ void main() {
               'presentAlert': true,
               'presentBadge': true,
               'presentSound': true,
+              'subtitle': 'a subtitle',
               'sound': 'sound.mp3',
               'badgeNumber': 1,
-              'attachments': [
+              'threadIdentifier': null,
+              'attachments': <Map<String, Object>>[
                 <String, Object>{
                   'filePath': 'video.mp4',
                   'identifier': '2b3f705f-a680-4c9f-8075-a46a70e28373',
@@ -1668,6 +2187,198 @@ void main() {
           }));
     });
 
+    group('zonedSchedule', () {
+      test('no repeat frequency', () async {
+        const IOSInitializationSettings iosInitializationSettings =
+            IOSInitializationSettings();
+        const InitializationSettings initializationSettings =
+            InitializationSettings(iOS: iosInitializationSettings);
+        await flutterLocalNotificationsPlugin
+            .initialize(initializationSettings);
+        tz.initializeTimeZones();
+        tz.setLocalLocation(tz.getLocation('Australia/Sydney'));
+        final tz.TZDateTime scheduledDate =
+            tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5));
+        const NotificationDetails notificationDetails = NotificationDetails(
+            iOS: IOSNotificationDetails(
+                presentAlert: true,
+                presentBadge: true,
+                presentSound: true,
+                sound: 'sound.mp3',
+                badgeNumber: 1,
+                attachments: <IOSNotificationAttachment>[
+              IOSNotificationAttachment('video.mp4',
+                  identifier: '2b3f705f-a680-4c9f-8075-a46a70e28373')
+            ]));
+
+        await flutterLocalNotificationsPlugin.zonedSchedule(
+            1,
+            'notification title',
+            'notification body',
+            scheduledDate,
+            notificationDetails,
+            androidAllowWhileIdle: true,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime);
+
+        expect(
+            log.last,
+            isMethodCall('zonedSchedule', arguments: <String, Object>{
+              'id': 1,
+              'title': 'notification title',
+              'body': 'notification body',
+              'payload': '',
+              'uiLocalNotificationDateInterpretation':
+                  UILocalNotificationDateInterpretation.absoluteTime.index,
+              'scheduledDateTime': _convertDateToISO8601String(scheduledDate),
+              'timeZoneName': 'Australia/Sydney',
+              'platformSpecifics': <String, Object>{
+                'presentAlert': true,
+                'presentBadge': true,
+                'presentSound': true,
+                'subtitle': null,
+                'sound': 'sound.mp3',
+                'badgeNumber': 1,
+                'threadIdentifier': null,
+                'attachments': <Map<String, Object>>[
+                  <String, Object>{
+                    'filePath': 'video.mp4',
+                    'identifier': '2b3f705f-a680-4c9f-8075-a46a70e28373',
+                  }
+                ],
+              },
+            }));
+      });
+
+      test('match time components', () async {
+        const IOSInitializationSettings iosInitializationSettings =
+            IOSInitializationSettings();
+        const InitializationSettings initializationSettings =
+            InitializationSettings(iOS: iosInitializationSettings);
+        await flutterLocalNotificationsPlugin
+            .initialize(initializationSettings);
+        tz.initializeTimeZones();
+        tz.setLocalLocation(tz.getLocation('Australia/Sydney'));
+        final tz.TZDateTime scheduledDate =
+            tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5));
+        const NotificationDetails notificationDetails = NotificationDetails(
+            iOS: IOSNotificationDetails(
+                presentAlert: true,
+                presentBadge: true,
+                presentSound: true,
+                sound: 'sound.mp3',
+                badgeNumber: 1,
+                attachments: <IOSNotificationAttachment>[
+              IOSNotificationAttachment('video.mp4',
+                  identifier: '2b3f705f-a680-4c9f-8075-a46a70e28373')
+            ]));
+
+        await flutterLocalNotificationsPlugin.zonedSchedule(
+            1,
+            'notification title',
+            'notification body',
+            scheduledDate,
+            notificationDetails,
+            androidAllowWhileIdle: true,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+            matchDateTimeComponents: DateTimeComponents.time);
+
+        expect(
+            log.last,
+            isMethodCall('zonedSchedule', arguments: <String, Object>{
+              'id': 1,
+              'title': 'notification title',
+              'body': 'notification body',
+              'payload': '',
+              'uiLocalNotificationDateInterpretation':
+                  UILocalNotificationDateInterpretation.absoluteTime.index,
+              'scheduledDateTime': _convertDateToISO8601String(scheduledDate),
+              'timeZoneName': 'Australia/Sydney',
+              'matchDateTimeComponents': DateTimeComponents.time.index,
+              'platformSpecifics': <String, Object>{
+                'presentAlert': true,
+                'presentBadge': true,
+                'presentSound': true,
+                'subtitle': null,
+                'sound': 'sound.mp3',
+                'badgeNumber': 1,
+                'threadIdentifier': null,
+                'attachments': <Map<String, Object>>[
+                  <String, Object>{
+                    'filePath': 'video.mp4',
+                    'identifier': '2b3f705f-a680-4c9f-8075-a46a70e28373',
+                  }
+                ],
+              },
+            }));
+      });
+
+      test('match day of week and time components', () async {
+        const IOSInitializationSettings iosInitializationSettings =
+            IOSInitializationSettings();
+        const InitializationSettings initializationSettings =
+            InitializationSettings(iOS: iosInitializationSettings);
+        await flutterLocalNotificationsPlugin
+            .initialize(initializationSettings);
+        tz.initializeTimeZones();
+        tz.setLocalLocation(tz.getLocation('Australia/Sydney'));
+        final tz.TZDateTime scheduledDate =
+            tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5));
+        const NotificationDetails notificationDetails = NotificationDetails(
+            iOS: IOSNotificationDetails(
+                presentAlert: true,
+                presentBadge: true,
+                presentSound: true,
+                sound: 'sound.mp3',
+                badgeNumber: 1,
+                attachments: <IOSNotificationAttachment>[
+              IOSNotificationAttachment('video.mp4',
+                  identifier: '2b3f705f-a680-4c9f-8075-a46a70e28373')
+            ]));
+
+        await flutterLocalNotificationsPlugin.zonedSchedule(
+            1,
+            'notification title',
+            'notification body',
+            scheduledDate,
+            notificationDetails,
+            androidAllowWhileIdle: true,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+            matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime);
+
+        expect(
+            log.last,
+            isMethodCall('zonedSchedule', arguments: <String, Object>{
+              'id': 1,
+              'title': 'notification title',
+              'body': 'notification body',
+              'payload': '',
+              'uiLocalNotificationDateInterpretation':
+                  UILocalNotificationDateInterpretation.absoluteTime.index,
+              'scheduledDateTime': _convertDateToISO8601String(scheduledDate),
+              'timeZoneName': 'Australia/Sydney',
+              'matchDateTimeComponents':
+                  DateTimeComponents.dayOfWeekAndTime.index,
+              'platformSpecifics': <String, Object>{
+                'presentAlert': true,
+                'presentBadge': true,
+                'presentSound': true,
+                'subtitle': null,
+                'sound': 'sound.mp3',
+                'badgeNumber': 1,
+                'threadIdentifier': null,
+                'attachments': <Map<String, Object>>[
+                  <String, Object>{
+                    'filePath': 'video.mp4',
+                    'identifier': '2b3f705f-a680-4c9f-8075-a46a70e28373',
+                  }
+                ],
+              },
+            }));
+      });
+    });
     test('requestPermissions with default settings', () async {
       await flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<
@@ -1718,4 +2429,402 @@ void main() {
       ]);
     });
   });
+
+  group('macOS', () {
+    const MethodChannel channel =
+        MethodChannel('dexterous.com/flutter/local_notifications');
+    final List<MethodCall> log = <MethodCall>[];
+
+    setUp(() {
+      flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin.private(
+          FakePlatform(operatingSystem: 'macos'));
+      // ignore: always_specify_types
+      channel.setMockMethodCallHandler((methodCall) {
+        log.add(methodCall);
+        if (methodCall.method == 'pendingNotificationRequests') {
+          return Future<List<Map<String, Object>>>.value(
+              <Map<String, Object>>[]);
+        } else if (methodCall.method == 'getNotificationAppLaunchDetails') {
+          return Future<Map<String, Object>>.value(<String, Object>{});
+        }
+        return Future<void>.value();
+      });
+    });
+
+    tearDown(() {
+      log.clear();
+    });
+
+    test('initialize with default parameter values', () async {
+      const MacOSInitializationSettings macOSInitializationSettings =
+          MacOSInitializationSettings();
+      const InitializationSettings initializationSettings =
+          InitializationSettings(macOS: macOSInitializationSettings);
+      await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+      expect(log, <Matcher>[
+        isMethodCall('initialize', arguments: <String, Object>{
+          'requestAlertPermission': true,
+          'requestSoundPermission': true,
+          'requestBadgePermission': true,
+          'defaultPresentAlert': true,
+          'defaultPresentSound': true,
+          'defaultPresentBadge': true,
+        })
+      ]);
+    });
+
+    test('initialize with all settings off', () async {
+      const MacOSInitializationSettings macOSInitializationSettings =
+          MacOSInitializationSettings(
+              requestAlertPermission: false,
+              requestBadgePermission: false,
+              requestSoundPermission: false,
+              defaultPresentAlert: false,
+              defaultPresentBadge: false,
+              defaultPresentSound: false);
+      const InitializationSettings initializationSettings =
+          InitializationSettings(macOS: macOSInitializationSettings);
+      await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+      expect(log, <Matcher>[
+        isMethodCall('initialize', arguments: <String, Object>{
+          'requestAlertPermission': false,
+          'requestSoundPermission': false,
+          'requestBadgePermission': false,
+          'defaultPresentAlert': false,
+          'defaultPresentSound': false,
+          'defaultPresentBadge': false,
+        })
+      ]);
+    });
+
+    test('show without macOS-specific details', () async {
+      const MacOSInitializationSettings macOSInitializationSettings =
+          MacOSInitializationSettings();
+      const InitializationSettings initializationSettings =
+          InitializationSettings(macOS: macOSInitializationSettings);
+      await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+      await flutterLocalNotificationsPlugin.show(
+          1, 'notification title', 'notification body', null);
+      expect(
+          log.last,
+          isMethodCall('show', arguments: <String, Object>{
+            'id': 1,
+            'title': 'notification title',
+            'body': 'notification body',
+            'payload': '',
+            'platformSpecifics': null,
+          }));
+    });
+
+    test('show with macOS-specific details', () async {
+      const MacOSInitializationSettings macOSInitializationSettings =
+          MacOSInitializationSettings();
+      const InitializationSettings initializationSettings =
+          InitializationSettings(macOS: macOSInitializationSettings);
+      await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+      const NotificationDetails notificationDetails = NotificationDetails(
+          macOS: MacOSNotificationDetails(
+              subtitle: 'a subtitle',
+              presentAlert: true,
+              presentBadge: true,
+              presentSound: true,
+              sound: 'sound.mp3',
+              badgeNumber: 1,
+              threadIdentifier: 'thread',
+              attachments: <MacOSNotificationAttachment>[
+            MacOSNotificationAttachment('video.mp4',
+                identifier: '2b3f705f-a680-4c9f-8075-a46a70e28373'),
+          ]));
+
+      await flutterLocalNotificationsPlugin.show(
+          1, 'notification title', 'notification body', notificationDetails);
+
+      expect(
+          log.last,
+          isMethodCall('show', arguments: <String, Object>{
+            'id': 1,
+            'title': 'notification title',
+            'body': 'notification body',
+            'payload': '',
+            'platformSpecifics': <String, Object>{
+              'subtitle': 'a subtitle',
+              'presentAlert': true,
+              'presentBadge': true,
+              'presentSound': true,
+              'sound': 'sound.mp3',
+              'badgeNumber': 1,
+              'threadIdentifier': 'thread',
+              'attachments': <Map<String, Object>>[
+                <String, Object>{
+                  'filePath': 'video.mp4',
+                  'identifier': '2b3f705f-a680-4c9f-8075-a46a70e28373',
+                }
+              ],
+            },
+          }));
+    });
+
+    group('zonedSchedule', () {
+      test('no repeat frequency', () async {
+        const MacOSInitializationSettings macOSInitializationSettings =
+            MacOSInitializationSettings();
+        const InitializationSettings initializationSettings =
+            InitializationSettings(macOS: macOSInitializationSettings);
+        await flutterLocalNotificationsPlugin
+            .initialize(initializationSettings);
+        tz.initializeTimeZones();
+        tz.setLocalLocation(tz.getLocation('Australia/Sydney'));
+        final tz.TZDateTime scheduledDate =
+            tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5));
+        const NotificationDetails notificationDetails = NotificationDetails(
+            macOS: MacOSNotificationDetails(
+                presentAlert: true,
+                presentBadge: true,
+                presentSound: true,
+                sound: 'sound.mp3',
+                badgeNumber: 1,
+                attachments: <MacOSNotificationAttachment>[
+              MacOSNotificationAttachment('video.mp4',
+                  identifier: '2b3f705f-a680-4c9f-8075-a46a70e28373')
+            ]));
+
+        await flutterLocalNotificationsPlugin.zonedSchedule(
+            1,
+            'notification title',
+            'notification body',
+            scheduledDate,
+            notificationDetails,
+            androidAllowWhileIdle: true,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime);
+
+        expect(
+            log.last,
+            isMethodCall('zonedSchedule', arguments: <String, Object>{
+              'id': 1,
+              'title': 'notification title',
+              'body': 'notification body',
+              'payload': '',
+              'scheduledDateTime': _convertDateToISO8601String(scheduledDate),
+              'timeZoneName': 'Australia/Sydney',
+              'platformSpecifics': <String, Object>{
+                'subtitle': null,
+                'presentAlert': true,
+                'presentBadge': true,
+                'presentSound': true,
+                'sound': 'sound.mp3',
+                'badgeNumber': 1,
+                'threadIdentifier': null,
+                'attachments': <Map<String, Object>>[
+                  <String, Object>{
+                    'filePath': 'video.mp4',
+                    'identifier': '2b3f705f-a680-4c9f-8075-a46a70e28373',
+                  }
+                ],
+              },
+            }));
+      });
+
+      test('match time components', () async {
+        const MacOSInitializationSettings macOSInitializationSettings =
+            MacOSInitializationSettings();
+        const InitializationSettings initializationSettings =
+            InitializationSettings(macOS: macOSInitializationSettings);
+        await flutterLocalNotificationsPlugin
+            .initialize(initializationSettings);
+        tz.initializeTimeZones();
+        tz.setLocalLocation(tz.getLocation('Australia/Sydney'));
+        final tz.TZDateTime scheduledDate =
+            tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5));
+        const NotificationDetails notificationDetails = NotificationDetails(
+            macOS: MacOSNotificationDetails(
+                presentAlert: true,
+                presentBadge: true,
+                presentSound: true,
+                sound: 'sound.mp3',
+                badgeNumber: 1,
+                attachments: <MacOSNotificationAttachment>[
+              MacOSNotificationAttachment('video.mp4',
+                  identifier: '2b3f705f-a680-4c9f-8075-a46a70e28373')
+            ]));
+
+        await flutterLocalNotificationsPlugin.zonedSchedule(
+            1,
+            'notification title',
+            'notification body',
+            scheduledDate,
+            notificationDetails,
+            androidAllowWhileIdle: true,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+            matchDateTimeComponents: DateTimeComponents.time);
+
+        expect(
+            log.last,
+            isMethodCall('zonedSchedule', arguments: <String, Object>{
+              'id': 1,
+              'title': 'notification title',
+              'body': 'notification body',
+              'payload': '',
+              'scheduledDateTime': _convertDateToISO8601String(scheduledDate),
+              'timeZoneName': 'Australia/Sydney',
+              'matchDateTimeComponents': DateTimeComponents.time.index,
+              'platformSpecifics': <String, Object>{
+                'subtitle': null,
+                'presentAlert': true,
+                'presentBadge': true,
+                'presentSound': true,
+                'sound': 'sound.mp3',
+                'badgeNumber': 1,
+                'threadIdentifier': null,
+                'attachments': <Map<String, Object>>[
+                  <String, Object>{
+                    'filePath': 'video.mp4',
+                    'identifier': '2b3f705f-a680-4c9f-8075-a46a70e28373',
+                  }
+                ],
+              },
+            }));
+      });
+
+      test('weekly repeat frequency', () async {
+        const MacOSInitializationSettings macOSInitializationSettings =
+            MacOSInitializationSettings();
+        const InitializationSettings initializationSettings =
+            InitializationSettings(macOS: macOSInitializationSettings);
+        await flutterLocalNotificationsPlugin
+            .initialize(initializationSettings);
+        tz.initializeTimeZones();
+        tz.setLocalLocation(tz.getLocation('Australia/Sydney'));
+        final tz.TZDateTime scheduledDate =
+            tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5));
+        const NotificationDetails notificationDetails = NotificationDetails(
+            macOS: MacOSNotificationDetails(
+                presentAlert: true,
+                presentBadge: true,
+                presentSound: true,
+                sound: 'sound.mp3',
+                badgeNumber: 1,
+                attachments: <MacOSNotificationAttachment>[
+              MacOSNotificationAttachment('video.mp4',
+                  identifier: '2b3f705f-a680-4c9f-8075-a46a70e28373')
+            ]));
+
+        await flutterLocalNotificationsPlugin.zonedSchedule(
+            1,
+            'notification title',
+            'notification body',
+            scheduledDate,
+            notificationDetails,
+            androidAllowWhileIdle: true,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+            matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime);
+
+        expect(
+            log.last,
+            isMethodCall('zonedSchedule', arguments: <String, Object>{
+              'id': 1,
+              'title': 'notification title',
+              'body': 'notification body',
+              'payload': '',
+              'scheduledDateTime': _convertDateToISO8601String(scheduledDate),
+              'timeZoneName': 'Australia/Sydney',
+              'matchDateTimeComponents':
+                  DateTimeComponents.dayOfWeekAndTime.index,
+              'platformSpecifics': <String, Object>{
+                'subtitle': null,
+                'presentAlert': true,
+                'presentBadge': true,
+                'presentSound': true,
+                'sound': 'sound.mp3',
+                'badgeNumber': 1,
+                'threadIdentifier': null,
+                'attachments': <Map<String, Object>>[
+                  <String, Object>{
+                    'filePath': 'video.mp4',
+                    'identifier': '2b3f705f-a680-4c9f-8075-a46a70e28373',
+                  }
+                ],
+              },
+            }));
+      });
+    });
+
+    test('requestPermissions with default settings', () async {
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              MacOSFlutterLocalNotificationsPlugin>()
+          .requestPermissions();
+      expect(log, <Matcher>[
+        isMethodCall('requestPermissions', arguments: <String, Object>{
+          'sound': null,
+          'badge': null,
+          'alert': null,
+        })
+      ]);
+    });
+    test('requestPermissions with all settings requested', () async {
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              MacOSFlutterLocalNotificationsPlugin>()
+          .requestPermissions(sound: true, badge: true, alert: true);
+      expect(log, <Matcher>[
+        isMethodCall('requestPermissions', arguments: <String, Object>{
+          'sound': true,
+          'badge': true,
+          'alert': true,
+        })
+      ]);
+    });
+    test('cancel', () async {
+      await flutterLocalNotificationsPlugin.cancel(1);
+      expect(log, <Matcher>[isMethodCall('cancel', arguments: 1)]);
+    });
+
+    test('cancelAll', () async {
+      await flutterLocalNotificationsPlugin.cancelAll();
+      expect(log, <Matcher>[isMethodCall('cancelAll', arguments: null)]);
+    });
+
+    test('pendingNotificationRequests', () async {
+      await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+      expect(log, <Matcher>[
+        isMethodCall('pendingNotificationRequests', arguments: null)
+      ]);
+    });
+
+    test('getNotificationAppLaunchDetails', () async {
+      await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
+      expect(log, <Matcher>[
+        isMethodCall('getNotificationAppLaunchDetails', arguments: null)
+      ]);
+    });
+  });
+}
+
+String _convertDateToISO8601String(tz.TZDateTime dateTime) {
+  String _twoDigits(int n) {
+    if (n >= 10) {
+      return '$n';
+    }
+    return '0$n';
+  }
+
+  String _fourDigits(int n) {
+    final int absN = n.abs();
+    final String sign = n < 0 ? '-' : '';
+    if (absN >= 1000) {
+      return '$n';
+    }
+    if (absN >= 100) {
+      return '${sign}0$absN';
+    }
+    if (absN >= 10) {
+      return '${sign}00$absN';
+    }
+    return '${sign}000$absN';
+  }
+
+  return '${_fourDigits(dateTime.year)}-${_twoDigits(dateTime.month)}-${_twoDigits(dateTime.day)}T${_twoDigits(dateTime.hour)}:${_twoDigits(dateTime.minute)}:${_twoDigits(dateTime.second)}'; // ignore: lines_longer_than_80_chars
 }

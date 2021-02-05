@@ -4,8 +4,8 @@ abstract class AndroidBitmap {
   String get icon;
 }
 
-class AndroidDrawable implements AndroidBitmap {
-  const AndroidDrawable(this._drawable);
+class AndroidVectorDrawable implements AndroidBitmap {
+  const AndroidVectorDrawable(this._drawable);
   final String _drawable;
 
   @override
@@ -26,10 +26,13 @@ class AndroidResourceBitmap implements AndroidBitmap {
 
 /// Represents a file path that should be used for a bitmap on Android.
 class AndroidFilePathBitmap implements AndroidBitmap {
+  /// Constructs an instance of [AndroidFilePathBitmap].
   const AndroidFilePathBitmap(this._bitmap);
+
   final String _bitmap;
 
-  /// A file path on the Android device that refers to the location of the bitmap.
+  /// A file path on the Android device that refers to the location of the
+  /// bitmap.
   @override
   String get icon => _bitmap;
 }
