@@ -165,8 +165,6 @@ import io.flutter.plugin.common.PluginRegistry.Registrar;
 
         setSmallIcon(context, notificationDetails, builder);
 
-        Log.d("jasldkfjsdlkfjlk", "createNotification " + notificationDetails.largeIcon);
-
         if (!StringUtils.isNullOrEmpty(notificationDetails.largeIcon)) {
             builder.setLargeIcon(getBitmapFromSource(context, notificationDetails.largeIcon, notificationDetails.largeIconBitmapSource));
         }
@@ -460,8 +458,6 @@ import io.flutter.plugin.common.PluginRegistry.Registrar;
         Canvas canvas = new Canvas(bitmap);
         drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
         drawable.draw(canvas);
-
-        Log.d("NOSIJTOKSDJF", "getBitmapFromVectorDrawable: DRAW " + drawableId);
 
         return bitmap;
     }

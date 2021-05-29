@@ -62,5 +62,5 @@ class IOSInitializationSettings {
   /// in the foreground.
   ///
   /// This property is only applicable to iOS versions older than 10.
-  final DidReceiveLocalNotificationCallback onDidReceiveLocalNotification;
+  final DidReceiveLocalNotificationCallback? onDidReceiveLocalNotification;
 }

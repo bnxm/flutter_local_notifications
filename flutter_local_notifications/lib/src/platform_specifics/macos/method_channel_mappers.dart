@@ -22,7 +22,7 @@ extension MacOSNotificationAttachmentMapper on MacOSNotificationAttachment {
 }
 
 extension MacOSNotificationDetailsMapper on MacOSNotificationDetails {
-  Map<String, Object> toMap() => <String, Object>{
+  Map<String, Object?> toMap() => <String, Object?>{
         'presentAlert': presentAlert,
         'presentSound': presentSound,
         'presentBadge': presentBadge,

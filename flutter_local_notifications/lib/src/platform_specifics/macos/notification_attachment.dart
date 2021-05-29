@@ -15,5 +15,5 @@ class MacOSNotificationAttachment {
   /// The unique identifier for the attachment.
   ///
   /// When left empty, the macOS APIs will generate a unique identifier
-  final String identifier;
+  final String? identifier;
 }

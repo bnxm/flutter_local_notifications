@@ -12,7 +12,7 @@ abstract class FlutterLocalNotificationsPlatform extends PlatformInterface {
   /// Constructs an instance of [FlutterLocalNotificationsPlatform].
   FlutterLocalNotificationsPlatform() : super(token: _token);
 
-  static FlutterLocalNotificationsPlatform _instance;
+  static late FlutterLocalNotificationsPlatform _instance;
 
   static final Object _token = Object();
 
@@ -35,7 +35,7 @@ abstract class FlutterLocalNotificationsPlatform extends PlatformInterface {
 
   /// Show a notification with an optional payload that will be passed back to
   /// the app when a notification is tapped on.
-  Future<void> show(int id, String title, String body, {String payload}) async {
+  Future<void> show(int id, String title, String body, {String? payload}) async {
     throw UnimplementedError('show() has not been implemented');
   }
 

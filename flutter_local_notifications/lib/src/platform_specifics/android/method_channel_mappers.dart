@@ -21,7 +21,7 @@ extension AndroidInitializationSettingsMapper on AndroidInitializationSettings {
 }
 
 extension MessageMapper on Message {
-  Map<String, Object> toMap() => <String, Object>{
+  Map<String, Object?> toMap() => <String, Object?>{
         'text': text,
         'timestamp': timestamp.millisecondsSinceEpoch,
         'person': person?.toMap(),
@@ -31,7 +31,7 @@ extension MessageMapper on Message {
 }
 
 extension AndroidNotificationChannelGroupMapper on AndroidNotificationChannelGroup {
-  Map<String, Object> toMap() => <String, Object>{
+  Map<String, Object?> toMap() => <String, Object?>{
         'id': id,
         'name': name,
         'description': description,
@@ -39,7 +39,7 @@ extension AndroidNotificationChannelGroupMapper on AndroidNotificationChannelGro
 }
 
 extension AndroidNotificationChannelMapper on AndroidNotificationChannel {
-  Map<String, Object> toMap() => <String, Object>{
+  Map<String, Object?> toMap() => <String, Object?>{
         'id': id,
         'name': name,
         'description': description,
@@ -54,11 +54,11 @@ extension AndroidNotificationChannelMapper on AndroidNotificationChannel {
         'ledColorRed': ledColor?.red,
         'ledColorGreen': ledColor?.green,
         'ledColorBlue': ledColor?.blue,
-        'channelAction': AndroidNotificationChannelAction.createIfNotExists?.index,
+        'channelAction': AndroidNotificationChannelAction.createIfNotExists.index,
       }..addAll(_convertNotificationSoundToMap(sound));
 }
 
-Map<String, Object> _convertNotificationSoundToMap(AndroidNotificationSound sound) {
+Map<String, Object> _convertNotificationSoundToMap(AndroidNotificationSound? sound) {
   if (sound is RawResourceAndroidNotificationSound) {
     return <String, Object>{
       'sound': sound.sound,
@@ -75,7 +75,7 @@ Map<String, Object> _convertNotificationSoundToMap(AndroidNotificationSound soun
 }
 
 extension PersonMapper on Person {
-  Map<String, Object> toMap() => <String, Object>{
+  Map<String, Object?> toMap() => <String, Object?>{
         'bot': bot,
         'important': important,
         'key': key,
@@ -86,22 +86,22 @@ extension PersonMapper on Person {
   Map<String, Object> _convertIconToMap() {
     if (icon is DrawableResourceAndroidIcon) {
       return <String, Object>{
-        'icon': icon.icon,
+        'icon': icon!.icon,
         'iconSource': AndroidIconSource.drawableResource.index,
       };
     } else if (icon is BitmapFilePathAndroidIcon) {
       return <String, Object>{
-        'icon': icon.icon,
+        'icon': icon!.icon,
         'iconSource': AndroidIconSource.bitmapFilePath.index,
       };
     } else if (icon is ContentUriAndroidIcon) {
       return <String, Object>{
-        'icon': icon.icon,
+        'icon': icon!.icon,
         'iconSource': AndroidIconSource.contentUri.index,
       };
     } else if (icon is FlutterBitmapAssetAndroidIcon) {
       return <String, Object>{
-        'icon': icon.icon,
+        'icon': icon!.icon,
         'iconSource': AndroidIconSource.flutterBitmapAsset.index,
       };
     } else {
@@ -111,21 +111,21 @@ extension PersonMapper on Person {
 }
 
 extension DefaultStyleInformationMapper on DefaultStyleInformation {
-  Map<String, Object> toMap() => _convertDefaultStyleInformationToMap(this);
+  Map<String, Object?> toMap() => _convertDefaultStyleInformationToMap(this);
 }
 
-Map<String, Object> _convertDefaultStyleInformationToMap(
+Map<String, Object?> _convertDefaultStyleInformationToMap(
         DefaultStyleInformation styleInformation) =>
-    <String, Object>{
+    <String, Object?>{
       'htmlFormatContent': styleInformation.htmlFormatContent,
       'htmlFormatTitle': styleInformation.htmlFormatTitle
     };
 
 extension BigPictureStyleInformationMapper on BigPictureStyleInformation {
-  Map<String, Object> toMap() => _convertDefaultStyleInformationToMap(this)
+  Map<String, Object?> toMap() => _convertDefaultStyleInformationToMap(this)
     ..addAll(_convertBigPictureToMap())
     ..addAll(_convertLargeIconToMap())
-    ..addAll(<String, Object>{
+    ..addAll(<String, Object?>{
       'contentTitle': contentTitle,
       'summaryText': summaryText,
       'htmlFormatContentTitle': htmlFormatContentTitle,
@@ -152,17 +152,17 @@ extension BigPictureStyleInformationMapper on BigPictureStyleInformation {
   Map<String, Object> _convertLargeIconToMap() {
     if (largeIcon is AndroidResourceBitmap) {
       return <String, Object>{
-        'largeIcon': largeIcon.icon,
+        'largeIcon': largeIcon!.icon,
         'largeIconBitmapSource': AndroidBitmapSource.drawable.index,
       };
     } else if (largeIcon is AndroidFilePathBitmap) {
       return <String, Object>{
-        'largeIcon': largeIcon.icon,
+        'largeIcon': largeIcon!.icon,
         'largeIconBitmapSource': AndroidBitmapSource.filePath.index,
       };
     } else if (largeIcon is AndroidVectorDrawable) {
       return <String, Object>{
-        'largeIcon': largeIcon.icon,
+        'largeIcon': largeIcon!.icon,
         'largeIconBitmapSource': AndroidBitmapSource.vectorDrawable.index,
       };
     } else {
@@ -172,8 +172,8 @@ extension BigPictureStyleInformationMapper on BigPictureStyleInformation {
 }
 
 extension BigTexStyleInformationMapper on BigTextStyleInformation {
-  Map<String, Object> toMap() => _convertDefaultStyleInformationToMap(this)
-    ..addAll(<String, Object>{
+  Map<String, Object?> toMap() => _convertDefaultStyleInformationToMap(this)
+    ..addAll(<String, Object?>{
       'bigText': bigText,
       'htmlFormatBigText': htmlFormatBigText,
       'contentTitle': contentTitle,
@@ -184,37 +184,37 @@ extension BigTexStyleInformationMapper on BigTextStyleInformation {
 }
 
 extension InboxStyleInformationMapper on InboxStyleInformation {
-  Map<String, Object> toMap() => _convertDefaultStyleInformationToMap(this)
-    ..addAll(<String, Object>{
+  Map<String, Object?> toMap() => _convertDefaultStyleInformationToMap(this)
+    ..addAll(<String, Object?>{
       'contentTitle': contentTitle,
       'htmlFormatContentTitle': htmlFormatContentTitle,
       'summaryText': summaryText,
       'htmlFormatSummaryText': htmlFormatSummaryText,
-      'lines': lines ?? <String>[],
+      'lines': lines,
       'htmlFormatLines': htmlFormatLines
     });
 }
 
 extension MessagingStyleInformationMapper on MessagingStyleInformation {
-  Map<String, Object> toMap() => _convertDefaultStyleInformationToMap(this)
-    ..addAll(<String, Object>{
-      'person': person?.toMap(),
+  Map<String, Object?> toMap() => _convertDefaultStyleInformationToMap(this)
+    ..addAll(<String, Object?>{
+      'person': person.toMap(),
       'conversationTitle': conversationTitle,
       'groupConversation': groupConversation,
       'messages': messages
-          ?.map((m) => m?.toMap()) // ignore: always_specify_types
-          ?.toList()
+          ?.map((m) => m.toMap()) // ignore: always_specify_types
+          .toList()
     });
 }
 
 extension AndroidNotificationDetailsMapper on AndroidNotificationDetails {
-  Map<String, Object> toMap() => <String, Object>{
+  Map<String, Object?> toMap() => <String, Object?>{
         'icon': icon,
         'channelId': channelId,
         'channelName': channelName,
         'channelDescription': channelDescription,
         'channelShowBadge': channelShowBadge,
-        'channelAction': channelAction?.index,
+        'channelAction': channelAction.index,
         'importance': importance.value,
         'priority': priority.value,
         'playSound': playSound,
@@ -258,36 +258,36 @@ extension AndroidNotificationDetailsMapper on AndroidNotificationDetails {
         ..addAll(_convertNotificationSoundToMap(sound))
         ..addAll(_convertLargeIconToMap());
 
-  Map<String, Object> _convertStyleInformationToMap() {
+  Map<String, Object?> _convertStyleInformationToMap() {
     if (styleInformation is BigPictureStyleInformation) {
-      return <String, Object>{
+      return <String, Object?>{
         'style': AndroidNotificationStyle.bigPicture.index,
-        'styleInformation': (styleInformation as BigPictureStyleInformation)?.toMap(),
+        'styleInformation': (styleInformation as BigPictureStyleInformation?)?.toMap(),
       };
     } else if (styleInformation is BigTextStyleInformation) {
-      return <String, Object>{
+      return <String, Object?>{
         'style': AndroidNotificationStyle.bigText.index,
-        'styleInformation': (styleInformation as BigTextStyleInformation)?.toMap(),
+        'styleInformation': (styleInformation as BigTextStyleInformation?)?.toMap(),
       };
     } else if (styleInformation is InboxStyleInformation) {
-      return <String, Object>{
+      return <String, Object?>{
         'style': AndroidNotificationStyle.inbox.index,
-        'styleInformation': (styleInformation as InboxStyleInformation)?.toMap(),
+        'styleInformation': (styleInformation as InboxStyleInformation?)?.toMap(),
       };
     } else if (styleInformation is MessagingStyleInformation) {
-      return <String, Object>{
+      return <String, Object?>{
         'style': AndroidNotificationStyle.messaging.index,
-        'styleInformation': (styleInformation as MessagingStyleInformation)?.toMap(),
+        'styleInformation': (styleInformation as MessagingStyleInformation?)?.toMap(),
       };
     } else if (styleInformation is MediaStyleInformation) {
-      return <String, Object>{
+      return <String, Object?>{
         'style': AndroidNotificationStyle.media.index,
-        'styleInformation': (styleInformation as MediaStyleInformation)?.toMap(),
+        'styleInformation': (styleInformation as MediaStyleInformation?)?.toMap(),
       };
     } else if (styleInformation is DefaultStyleInformation) {
-      return <String, Object>{
+      return <String, Object?>{
         'style': AndroidNotificationStyle.defaultStyle.index,
-        'styleInformation': (styleInformation as DefaultStyleInformation)?.toMap(),
+        'styleInformation': (styleInformation as DefaultStyleInformation?)?.toMap(),
       };
     } else {
       return <String, Object>{
@@ -300,17 +300,17 @@ extension AndroidNotificationDetailsMapper on AndroidNotificationDetails {
   Map<String, Object> _convertLargeIconToMap() {
     if (largeIcon is AndroidResourceBitmap) {
       return <String, Object>{
-        'largeIcon': largeIcon.icon,
+        'largeIcon': largeIcon!.icon,
         'largeIconBitmapSource': AndroidBitmapSource.drawable.index,
       };
     } else if (largeIcon is AndroidFilePathBitmap) {
       return <String, Object>{
-        'largeIcon': largeIcon.icon,
+        'largeIcon': largeIcon!.icon,
         'largeIconBitmapSource': AndroidBitmapSource.filePath.index,
       };
     } else if (largeIcon is AndroidVectorDrawable) {
       return <String, Object>{
-        'largeIcon': largeIcon.icon,
+        'largeIcon': largeIcon!.icon,
         'largeIconBitmapSource': AndroidBitmapSource.vectorDrawable.index,
       };
     } else {

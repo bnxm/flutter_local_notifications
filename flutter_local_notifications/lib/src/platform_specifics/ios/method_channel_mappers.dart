@@ -22,7 +22,7 @@ extension IOSNotificationAttachmentMapper on IOSNotificationAttachment {
 }
 
 extension IOSNotificationDetailsMapper on IOSNotificationDetails {
-  Map<String, Object> toMap() => <String, Object>{
+  Map<String, Object?> toMap() => <String, Object?>{
         'presentAlert': presentAlert,
         'presentSound': presentSound,
         'presentBadge': presentBadge,
